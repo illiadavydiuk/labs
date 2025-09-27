@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace first_task_file_encryptor.Domain.Interfaces
 {
-    interface IEncryptionService
+    public interface IEncryptionService
     {
+        Task<bool> EncryptFileAsync(string inputFile, string outputFile, string password);
+        Task<bool> DecryptFileAsync(string inputFile, string outputFile, string password);
     }
 }

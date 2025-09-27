@@ -3,10 +3,61 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:first_task_file_encryptor"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="File Encryptor" Height="500" Width="550" MinHeight="450" MinWidth="520"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
+        <TextBlock Grid.Row="0" Text="Оберіть папку для обробки:" FontSize="14" Margin="0,0,0,5"/>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Text="{Binding FolderPath, Mode=OneWay}" IsReadOnly="True" VerticalContentAlignment="Center" Padding="5"/>
+            <Button Grid.Column="1" Content="Обрати..." Command="{Binding BrowseFolderCommand}" Padding="15,5" Margin="10,0,0,0"/>
+        </Grid>
+
+        <TextBlock Grid.Row="2" Text="Введіть пароль:" FontSize="14" Margin="0,15,0,5"/>
+
+        <PasswordBox Grid.Row="3" x:Name="PasswordBox" VerticalContentAlignment="Center" Padding="5"/>
+
+        <ListView Grid.Row="4" ItemsSource="{Binding Files}" Margin="0,15,0,15">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Ім'я файлу" Width="220" DisplayMemberBinding="{Binding FileName}" />
+                    <GridViewColumn Header="Розмір" Width="100" DisplayMemberBinding="{Binding FormattedSize}" />
+                    <GridViewColumn Header="Статус" Width="150" DisplayMemberBinding="{Binding Status}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Content="Шифрувати" 
+                    Command="{Binding EncryptAllCommand}" 
+                    CommandParameter="{Binding ElementName=PasswordBox}" 
+                    Padding="30,12" Margin="5" 
+                    Background="#4CAF50" Foreground="White" FontWeight="Bold" FontSize="14" BorderThickness="0"/>
+
+            <Button Content="Дешифрувати" 
+                    Command="{Binding DecryptAllCommand}" 
+                    CommandParameter="{Binding ElementName=PasswordBox}" 
+                    Padding="30,12" Margin="5" 
+                    Background="#2196F3" Foreground="White" FontWeight="Bold" FontSize="14" BorderThickness="0"/>
+        </StackPanel>
+
+        <StatusBar Grid.Row="6" Margin="0,10,0,0">
+            <TextBlock Text="{Binding StatusMessage}"/>
+        </StatusBar>
     </Grid>
 </Window>
