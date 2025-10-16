@@ -5,7 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "first_task_file_encryptor", "first_task_file_encryptor\first_task_file_encryptor.csproj", "{E4178E2E-DA4B-4EC5-9D77-41A48F55583C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "second_task", "second_task", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "second_task.Data", "C:\Users\Admin\Desktop\second_task_dataset_final\second_task.Data\second_task.Data.csproj", "{A40AAEB6-B541-7EC2-DF55-817ABD27B89D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "second_task.WPF", "C:\Users\Admin\Desktop\second_task_dataset_final\second_task.WPF\second_task.WPF.csproj", "{AD2CBC74-F8F0-9403-07C7-64B34DB4E97F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,6 +19,14 @@ Global
 		{E4178E2E-DA4B-4EC5-9D77-41A48F55583C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4178E2E-DA4B-4EC5-9D77-41A48F55583C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4178E2E-DA4B-4EC5-9D77-41A48F55583C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A40AAEB6-B541-7EC2-DF55-817ABD27B89D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A40AAEB6-B541-7EC2-DF55-817ABD27B89D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A40AAEB6-B541-7EC2-DF55-817ABD27B89D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A40AAEB6-B541-7EC2-DF55-817ABD27B89D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD2CBC74-F8F0-9403-07C7-64B34DB4E97F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD2CBC74-F8F0-9403-07C7-64B34DB4E97F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD2CBC74-F8F0-9403-07C7-64B34DB4E97F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD2CBC74-F8F0-9403-07C7-64B34DB4E97F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
