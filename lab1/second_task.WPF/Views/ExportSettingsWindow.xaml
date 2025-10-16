@@ -1,0 +1,50 @@
+<Window x:Class="second_task.WPF.Views.ExportSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CSV Export Settings" Height="250" Width="400"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Title -->
+        <TextBlock Grid.Row="0" Text="CSV Export Settings" FontSize="16" FontWeight="Bold" 
+                   HorizontalAlignment="Center" Margin="0,0,0,20"/>
+        
+        <!-- Settings -->
+        <StackPanel Grid.Row="1">
+            <!-- Delimiter -->
+            <GroupBox Header="CSV Delimiter" Margin="0,0,0,15">
+                <StackPanel Margin="15">
+                    <TextBlock Text="Choose field separator:" Margin="0,0,0,10"/>
+                    <ComboBox Name="DelimiterComboBox" Width="250" HorizontalAlignment="Left" SelectedIndex="0">
+                        <ComboBoxItem Content="Comma (,) - Standard" Tag=","/>
+                        <ComboBoxItem Content="Semicolon (;) - European" Tag=";"/>
+                        <ComboBoxItem Content="Tab - For spreadsheets" Tag="&#x9;"/>
+                        <ComboBoxItem Content="Pipe (|) - Alternative" Tag="|"/>
+                    </ComboBox>
+                </StackPanel>
+            </GroupBox>
+            
+            <!-- Headers -->
+            <GroupBox Header="Headers">
+                <StackPanel Margin="15">
+                    <CheckBox Name="IncludeHeadersCheckBox" Content="Include column headers" IsChecked="True"/>
+                    <TextBlock Text="Add header row with column names" 
+                               FontStyle="Italic" Foreground="Gray" Margin="20,5,0,0"/>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+        
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="OK" Click="OK_Click" Padding="20,8" Margin="0,0,10,0" 
+                    Background="Green" Foreground="White" IsDefault="True"/>
+            <Button Content="Cancel" Click="Cancel_Click" Padding="15,8" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

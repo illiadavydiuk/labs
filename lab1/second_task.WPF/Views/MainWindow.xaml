@@ -1,0 +1,161 @@
+<Window x:Class="second_task.WPF.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:oxy="http://oxyplot.org/wpf"
+        Title="dataset" Height="800" Width="1200"
+        WindowStartupLocation="CenterScreen">
+    
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Menu -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" Command="{Binding OpenFileCommand}"/>
+                <MenuItem Header="_Recent Files" Name="RecentFilesMenu"/>
+                <Separator/>
+                <MenuItem Header="_Save As..." Command="{Binding SaveFileCommand}"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Click="Exit_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Data">
+                <MenuItem Header="_Add Meal" Command="{Binding AddMealCommand}"/>
+                <MenuItem Header="_Show Charts" Command="{Binding ShowChartsCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Reports">
+                <MenuItem Header="Generate _XLSX Report" Command="{Binding GenerateXlsxReportCommand}"/>
+                <MenuItem Header="Generate _DOCX Report" Command="{Binding GenerateDocxReportCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="Show _Logs" Command="{Binding ShowLogsCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" Click="About_Click"/>
+            </MenuItem>
+        </Menu>
+        
+        <!-- Toolbar -->
+        <ToolBar Grid.Row="1">
+            <Button Content="Open" Command="{Binding OpenFileCommand}" Padding="10,5"/>
+            <Button Content="Save As" Command="{Binding SaveFileCommand}" Padding="10,5"/>
+            <Separator/>
+            <Button Content="➕ Add Record" Command="{Binding AddMealCommand}" Padding="10,5" Background="LightGreen"/>
+            <Button Content="✏️ Edit Record" Command="{Binding EditMealCommand}" Padding="10,5" Background="LightBlue"/>
+            <Button Content="🗑️ Delete Record" Command="{Binding DeleteMealCommand}" Padding="10,5" Background="LightCoral"/>
+            <Separator/>
+            <Button Content="Charts" Command="{Binding ShowChartsCommand}" Padding="10,5"/>
+            <Separator/>
+            <TextBlock Text="Search:" VerticalAlignment="Center" Margin="5,0"/>
+            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                     Width="150" Margin="5,0"/>
+            <TextBlock Text="Sort:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+            <ComboBox ItemsSource="{Binding SortColumns}" SelectedItem="{Binding SelectedSortColumn}" 
+                      Width="100" Margin="0,0,5,0"/>
+            <CheckBox Content="↑ A→Z" IsChecked="{Binding SortAscending}" VerticalAlignment="Center" Margin="5,0" 
+                      ToolTip="Checked: Ascending (A→Z, 1→10) | Unchecked: Descending (Z→A, 10→1)"/>
+            <Button Content="Clear Sort" Command="{Binding ClearSortingCommand}" Padding="8,3" Margin="5,0"
+                    ToolTip="Clear sorting or Ctrl+Click on column header"/>
+            <Separator/>
+            <TextBlock Text="Group:" VerticalAlignment="Center" Margin="5,0"/>
+            <ComboBox ItemsSource="{Binding GroupColumns}" SelectedItem="{Binding SelectedGroupColumn}" 
+                      Width="80" Margin="0,0,5,0"/>
+            <TextBlock Text="Agg:" VerticalAlignment="Center" Margin="5,0"/>
+            <ComboBox ItemsSource="{Binding AggregationTypes}" SelectedItem="{Binding SelectedAggregation}" 
+                      Width="70" Margin="0,0,5,0"/>
+            <Button Content="Calculate" Command="{Binding CalculateAggregationsCommand}" Padding="8,3" Margin="5,0"/>
+        </ToolBar>
+        
+        <!-- Main Content -->
+        <TabControl Grid.Row="2" Margin="5">
+            <TabItem Header="Data View">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <DataGrid Grid.Row="0" ItemsSource="{Binding FilteredMeals}" 
+                              SelectedItem="{Binding SelectedMeal}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              GridLinesVisibility="All"
+                              AlternatingRowBackground="LightGray"
+                              Sorting="DataGrid_Sorting"
+                              Name="MealsDataGrid">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding MealId}" Width="60" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Meal Name" Binding="{Binding MealName}" Width="150"/>
+                        <DataGridTextColumn Header="Cuisine" Binding="{Binding Cuisine.Name}" Width="100"/>
+                        <DataGridTextColumn Header="Diet" Binding="{Binding Diet.Name}" Width="100"/>
+                        <DataGridTextColumn Header="Meal Type" Binding="{Binding MealType}" Width="100"/>
+                        <DataGridTextColumn Header="Calories" Binding="{Binding Calories}" Width="80"/>
+                        <DataGridTextColumn Header="Protein (g)" Binding="{Binding ProteinG}" Width="80"/>
+                        <DataGridTextColumn Header="Carbs (g)" Binding="{Binding CarbsG}" Width="80"/>
+                        <DataGridTextColumn Header="Fat (g)" Binding="{Binding FatG}" Width="80"/>
+                        <DataGridTextColumn Header="Rating" Binding="{Binding Rating}" Width="70"/>
+                        <DataGridCheckBoxColumn Header="Healthy" Binding="{Binding IsHealthy}" Width="70"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                
+                <!-- Aggregations Panel -->
+                <Border Grid.Row="1" Background="LightBlue" Padding="10" Margin="0,5,0,0" 
+                        Visibility="{Binding ShowAggregations, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="Aggregation Results" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <DataGrid ItemsSource="{Binding AggregationResults}" AutoGenerateColumns="False" 
+                                  IsReadOnly="True" MaxHeight="150">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Group" Binding="{Binding GroupName}" Width="120"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding AggregationType}" Width="80"/>
+                                <DataGridTextColumn Header="Value" Binding="{Binding FormattedValue}" Width="80"/>
+                                <DataGridTextColumn Header="Count" Binding="{Binding Count}" Width="60"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+                </Grid>
+            </TabItem>
+            
+            <TabItem Header="Charts">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+                        <TextBlock Text="Chart Type:" VerticalAlignment="Center" Margin="5,0"/>
+                        <ComboBox Width="150" Margin="5,0">
+                            <ComboBoxItem Content="Calories by Cuisine" IsSelected="True"/>
+                            <ComboBoxItem Content="Rating Distribution"/>
+                            <ComboBoxItem Content="Healthy vs Unhealthy"/>
+                        </ComboBox>
+                    </StackPanel>
+                    
+                    <oxy:PlotView Grid.Row="1" Model="{Binding PlotModel}" Margin="5"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="3">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusText}"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Text="{Binding FilteredMeals.Count, StringFormat='Records: {0}'}"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>
