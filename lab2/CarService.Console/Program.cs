@@ -5,9 +5,7 @@ using Microsoft.EntityFrameworkCore;
 // Створюємо контекст
 using var context = new CarServiceDbContext();
 
-// =======================
 // 1) Простий Where
-// =======================
 var expensiveOrders = context.RepairOrders
     .Where(ro => ro.TotalEstimate > 2000)
     .ToList();
@@ -19,9 +17,7 @@ foreach (var r in expensiveOrders)
 }
 Console.WriteLine();
 
-// =======================
 // 2) FirstOrDefault
-// =======================
 var specificCar = context.Cars
     .FirstOrDefault(c => c.Make == "Toyota");
 
@@ -32,9 +28,7 @@ if (specificCar != null)
 }
 Console.WriteLine();
 
-// =======================
 // 3) Find (пошук по PK)
-// =======================
 var firstCustomer = context.Customers.Find(1);
 
 Console.WriteLine("=== Customer with ID = 1 ===");
@@ -44,9 +38,7 @@ if (firstCustomer != null)
 }
 Console.WriteLine();
 
-// =======================
 // 4) Include навігації
-// =======================
 var ordersWithRelations = context.RepairOrders
     .Include(ro => ro.Customer)
     .Include(ro => ro.Car)
@@ -60,9 +52,7 @@ foreach (var o in ordersWithRelations)
 }
 Console.WriteLine();
 
-// =======================
 // 5) Join/Include у SpareParts
-// =======================
 var partsWithSuppliers = context.SpareParts
     .Include(p => p.Supplier)
     .OrderByDescending(p => p.Price)
@@ -75,9 +65,7 @@ foreach (var p in partsWithSuppliers)
 }
 Console.WriteLine();
 
-// =======================
 // 6) Count + Average
-// =======================
 
 int totalCars = context.Cars.Count();
 double avgMileage = context.Cars.Average(c => c.Mileage);
@@ -87,9 +75,7 @@ Console.WriteLine($"Cars in system: {totalCars}");
 Console.WriteLine($"Average mileage: {avgMileage:F0} km");
 Console.WriteLine();
 
-// =======================
 // 7) Сортування по зарплаті
-// =======================
 var sortedEmployees = context.Employees
     .OrderByDescending(e => e.Salary)
     .ToList();
