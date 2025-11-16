@@ -55,7 +55,7 @@ namespace CarService.Core.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Cars");
+                    b.ToTable("Cars", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.Customer", b =>
@@ -83,7 +83,7 @@ namespace CarService.Core.Migrations
 
                     b.HasKey("CustomerId");
 
-                    b.ToTable("Customers");
+                    b.ToTable("Customers", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.Employee", b =>
@@ -122,7 +122,7 @@ namespace CarService.Core.Migrations
 
                     b.HasIndex("ManagerId");
 
-                    b.ToTable("Employees");
+                    b.ToTable("Employees", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.PartRequest", b =>
@@ -164,7 +164,7 @@ namespace CarService.Core.Migrations
 
                     b.HasIndex("RepairOrderId");
 
-                    b.ToTable("PartRequest");
+                    b.ToTable("PartRequest", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.Payment", b =>
@@ -203,7 +203,7 @@ namespace CarService.Core.Migrations
 
                     b.HasIndex("RepairOrderId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.RepairJob", b =>
@@ -237,7 +237,7 @@ namespace CarService.Core.Migrations
 
                     b.HasIndex("ServiceId");
 
-                    b.ToTable("RepairJobs");
+                    b.ToTable("RepairJobs", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.RepairOrder", b =>
@@ -285,7 +285,7 @@ namespace CarService.Core.Migrations
 
                     b.HasIndex("VIN");
 
-                    b.ToTable("RepairOrders");
+                    b.ToTable("RepairOrders", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.Service", b =>
@@ -312,7 +312,7 @@ namespace CarService.Core.Migrations
 
                     b.HasKey("ServiceId");
 
-                    b.ToTable("Services");
+                    b.ToTable("Services", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.SparePart", b =>
@@ -353,7 +353,7 @@ namespace CarService.Core.Migrations
 
                     b.HasIndex("SupplierId");
 
-                    b.ToTable("SpareParts");
+                    b.ToTable("SpareParts", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.Supplier", b =>
@@ -376,7 +376,7 @@ namespace CarService.Core.Migrations
 
                     b.HasKey("SupplierId");
 
-                    b.ToTable("Suppliers");
+                    b.ToTable("Suppliers", (string)null);
                 });
 
             modelBuilder.Entity("CarService.Core.Models.Car", b =>

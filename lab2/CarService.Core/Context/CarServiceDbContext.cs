@@ -1,4 +1,5 @@
 ﻿using CarService.Core.Models;
+using CarService.Core.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,7 @@ namespace CarService.Core.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            //modelBuilder.SeedOurData();
 
             modelBuilder.Entity<Car>()
                 .HasOne(c => c.Customer)
@@ -103,6 +105,7 @@ namespace CarService.Core.Context
                 .HasForeignKey(rj => rj.MechanicId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
+
 
     }
 }
