@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="DuckNet.Data/DuckNet.Data.csproj" />
+  <Project Path="DuckNet.Repositories/DuckNet.Repositories.csproj" />
+  <Project Path="DuckNet.Services/DuckNet.Services.csproj" />
+</Solution>
