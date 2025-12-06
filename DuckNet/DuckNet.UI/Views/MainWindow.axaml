@@ -1,0 +1,27 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DuckNet.UI.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DesignWidth="800"
+        d:DesignHeight="450"
+        x:Class="DuckNet.UI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="DuckNet Preview Test">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Border Padding="20" Background="#1E1E2F" CornerRadius="12">
+        <StackPanel Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="🌐 DuckNet Preview" FontSize="28" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+            <TextBlock Text="{Binding Greeting}" FontSize="18" Foreground="#B0E0E6" HorizontalAlignment="Center"/>
+            <TextBox Width="200" Watermark="Enter IP..." />
+            <Button Width="120" Height="35" Content="Scan Network" Background="#007ACC" Foreground="White"/>
+        </StackPanel>
+    </Border>
+
+</Window>
