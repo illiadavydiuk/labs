@@ -64,6 +64,7 @@
                     <Button Tag="📊" Content="Дашборд" Click="Nav_Dashboard_Click" Style="{StaticResource MenuBtn}"/>
                     <Button Tag="📡" Content="Сканер" Click="Nav_Scanner_Click" Style="{StaticResource MenuBtn}"/>
                     <Button Tag="📜" Content="Журнал подій" Click="Nav_Events_Click" Style="{StaticResource MenuBtn}"/>
+                    <Button Tag="🕒" Content="Історія сканувань" Click="Nav_History_Click" Style="{StaticResource MenuBtn}"/>
                     <Button Tag="🔌" Content="Адаптери" Click="Nav_Adapters_Click" Style="{StaticResource MenuBtn}"/>
                     <Button Tag="🛠" Content="Діагностика" Click="Nav_Diagnostics_Click" Style="{StaticResource MenuBtn}"/>
                 </StackPanel>
@@ -83,27 +84,18 @@
                         <TextBlock Text="Огляд мережі" FontSize="28" FontWeight="Bold" Margin="0,0,0,25"/>
                         <WrapPanel Margin="0,0,0,20">
                             <Border Width="220" Background="{StaticResource CardColor}" CornerRadius="16" Margin="0,0,20,20" Padding="25">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="15" Opacity="0.05" ShadowDepth="2" Color="Black"/>
-                                </Border.Effect>
                                 <StackPanel>
                                     <TextBlock Text="Всього пристроїв" Foreground="{StaticResource TextLight}"/>
                                     <TextBlock x:Name="DashTotal" Text="0" FontSize="42" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,10,0,0"/>
                                 </StackPanel>
                             </Border>
                             <Border Width="220" Background="{StaticResource CardColor}" CornerRadius="16" Margin="0,0,20,20" Padding="25">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="15" Opacity="0.05" ShadowDepth="2" Color="Black"/>
-                                </Border.Effect>
                                 <StackPanel>
                                     <TextBlock Text="Зараз онлайн" Foreground="{StaticResource TextLight}"/>
                                     <TextBlock x:Name="DashOnline" Text="0" FontSize="42" FontWeight="Bold" Foreground="{StaticResource SuccessColor}" Margin="0,10,0,0"/>
                                 </StackPanel>
                             </Border>
                             <Border Width="220" Background="{StaticResource CardColor}" CornerRadius="16" Margin="0,0,20,20" Padding="25">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="15" Opacity="0.05" ShadowDepth="2" Color="Black"/>
-                                </Border.Effect>
                                 <StackPanel>
                                     <TextBlock Text="Зараз офлайн" Foreground="{StaticResource TextLight}"/>
                                     <TextBlock x:Name="DashOffline" Text="0" FontSize="42" FontWeight="Bold" Foreground="{StaticResource DangerColor}" Margin="0,10,0,0"/>
@@ -112,18 +104,12 @@
                         </WrapPanel>
 
                         <Border Background="{StaticResource CardColor}" CornerRadius="16" Padding="20" Height="220" Margin="0,0,0,25">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="15" Opacity="0.05" ShadowDepth="2" Color="Black"/>
-                            </Border.Effect>
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                                    <TextBlock Text="📉" FontSize="18" Margin="0,0,10,0"/>
-                                    <TextBlock Text="Історія активності" FontWeight="Bold" FontSize="16"/>
-                                </StackPanel>
+                                <TextBlock Text="📉 Активність" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
                                 <Border Grid.Row="1" BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" ClipToBounds="True">
                                     <Canvas x:Name="GraphCanvas" Background="Transparent" SizeChanged="GraphCanvas_SizeChanged">
                                         <Polyline x:Name="ActivityGraphLine" Stroke="{StaticResource PrimaryColor}" StrokeThickness="3" Points=""/>
@@ -154,8 +140,8 @@
                 </Grid>
 
                 <DataGrid Grid.Row="1" x:Name="GridScanner" AutoGenerateColumns="False" 
-                          CanUserAddRows="False" RowHeight="60"
-                          IsReadOnly="False" 
+                          CanUserAddRows="False" RowHeight="60" 
+                          IsReadOnly="False"
                           CellEditEnding="GridScanner_CellEditEnding">
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Width="50" IsReadOnly="True">
@@ -168,29 +154,33 @@
 
                         <DataGridTextColumn Header="IP" Binding="{Binding IpAddress}" Width="130" IsReadOnly="True" ElementStyle="{StaticResource CenteredCell}" FontWeight="Bold"/>
                         <DataGridTextColumn Header="MAC" Binding="{Binding MacAddress}" Width="140" IsReadOnly="True" ElementStyle="{StaticResource CenteredCell}" Foreground="Gray"/>
-                        <DataGridTextColumn Header="Hostname / Vendor" Binding="{Binding Hostname}" Width="180" IsReadOnly="True" ElementStyle="{StaticResource CenteredCell}"/>
+                        <DataGridTextColumn Header="Vendor / Hostname" Binding="{Binding Hostname}" Width="200" IsReadOnly="True" ElementStyle="{StaticResource CenteredCell}"/>
 
-                        <DataGridTextColumn Header="Моя Назва (Ред.)" Binding="{Binding CustomName, UpdateSourceTrigger=PropertyChanged}" Width="180">
+                        <DataGridTextColumn Header="Моя Назва (Ред.)" Binding="{Binding CustomName, UpdateSourceTrigger=LostFocus}" Width="180" IsReadOnly="False">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                             <DataGridTextColumn.EditingElementStyle>
                                 <Style TargetType="TextBox">
                                     <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
                                 </Style>
                             </DataGridTextColumn.EditingElementStyle>
                         </DataGridTextColumn>
 
-                        <DataGridCheckBoxColumn Header="Довірений" Binding="{Binding IsTrusted, UpdateSourceTrigger=PropertyChanged}" Width="100" IsReadOnly="False">
-                            <DataGridCheckBoxColumn.ElementStyle>
-                                <Style TargetType="CheckBox">
-                                    <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
-                            </DataGridCheckBoxColumn.ElementStyle>
-                        </DataGridCheckBoxColumn>
+                        <DataGridTemplateColumn Header="Довірений" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsTrusted, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                              HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"
+                                              Click="ChkTrusted_Click"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
@@ -203,7 +193,6 @@
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,25">
                     <TextBlock Text="Журнал подій" FontSize="28" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
-
                     <TextBlock Text="Експорт за:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                     <DatePicker x:Name="DateExport" Width="120" VerticalContentAlignment="Center"/>
                     <Button Content="💾 Експорт в TXT" Click="BtnExportEvents_Click" Style="{StaticResource ModernBtn}" Margin="10,0,0,0" Background="{StaticResource SecondaryColor}"/>
@@ -217,6 +206,22 @@
                 </DataGrid>
             </Grid>
 
+            <Grid x:Name="ViewHistory" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Історія сканувань" FontSize="28" FontWeight="Bold" Margin="0,0,0,25"/>
+
+                <DataGrid Grid.Row="1" x:Name="GridHistory" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="50">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Час сканування" Binding="{Binding ScanTime, StringFormat='dd.MM.yyyy HH:mm:ss'}" Width="200" ElementStyle="{StaticResource CenteredCell}"/>
+                        <DataGridTextColumn Header="Знайдено пристроїв" Binding="{Binding DevicesFound}" Width="200" ElementStyle="{StaticResource CenteredCell}" FontWeight="Bold"/>
+                        <DataGridTextColumn Header="Середній Ping (ms)" Binding="{Binding AveragePingMs}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
             <Grid x:Name="ViewAdapters" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -225,11 +230,9 @@
                 <TextBlock Text="Керування адаптерами" FontSize="28" FontWeight="Bold" Margin="0,0,0,25"/>
                 <DataGrid Grid.Row="1" x:Name="GridAdapters" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="70">
                     <DataGrid.Columns>
-
                         <DataGridTextColumn Header="Інтерфейс" Binding="{Binding NetConnectionId}" Width="Auto" FontWeight="Bold" FontSize="15">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
-                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                     <Setter Property="VerticalAlignment" Value="Center"/>
                                     <Setter Property="HorizontalAlignment" Value="Left"/>
                                     <Setter Property="Margin" Value="10,0"/>
@@ -265,9 +268,6 @@
                 <StackPanel>
                     <TextBlock Text="Діагностика" FontSize="28" FontWeight="Bold" Margin="0,0,0,25"/>
                     <Border Background="{StaticResource CardColor}" Padding="30" CornerRadius="16">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="15" Opacity="0.05" ShadowDepth="2" Color="Black"/>
-                        </Border.Effect>
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <TextBox x:Name="TxtPingTarget" Text="8.8.8.8" Width="250" Style="{StaticResource ModernTextBox}"/>
@@ -283,7 +283,20 @@
             <Grid x:Name="ViewSettings" Visibility="Collapsed">
                 <ScrollViewer BorderThickness="0">
                     <StackPanel>
-                        <TextBlock Text="Налаштування" FontSize="28" FontWeight="Bold" Margin="0,0,0,25"/>
+                        <TextBlock Text="Налаштування програми" FontSize="28" FontWeight="Bold" Margin="0,0,0,25"/>
+
+                        <Border Background="{StaticResource CardColor}" Padding="30" CornerRadius="16" Margin="0,0,0,25">
+                            <StackPanel>
+                                <TextBlock Text="Параметри сканування" FontWeight="Bold" FontSize="18" Margin="0,0,0,15"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBlock Text="Інтервал автосканування (секунд):" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBox x:Name="TxtScanInterval" Width="80" Text="30" Style="{StaticResource ModernTextBox}"/>
+                                </StackPanel>
+                                <TextBlock Text="* Стан автосканування зберігається автоматично." Foreground="Gray" FontSize="12"/>
+
+                                <Button Content="💾 Зберегти налаштування" Click="SaveScanInterval_Click" Style="{StaticResource ModernBtn}" Margin="0,15,0,0" HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Border>
 
                         <Border Background="{StaticResource CardColor}" Padding="30" CornerRadius="16" Margin="0,0,0,25">
                             <StackPanel>
@@ -292,55 +305,33 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Background="{StaticResource CardColor}" Padding="30" CornerRadius="16" Margin="0,0,0,25">
-                            <StackPanel>
-                                <TextBlock Text="Автосканування" FontWeight="Bold" FontSize="18" Margin="0,0,0,15"/>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Інтервал (секунд):" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                    <TextBox x:Name="TxtScanInterval" Width="80" Text="30" Style="{StaticResource ModernTextBox}"/>
-                                    <Button Content="💾 Зберегти" Click="SaveScanInterval_Click" Style="{StaticResource ModernBtn}" Margin="15,0,0,0"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
                         <Border Background="{StaticResource CardColor}" Padding="30" CornerRadius="16">
                             <StackPanel>
-                                <TextBlock Text="Профілі Адаптерів" FontWeight="Bold" FontSize="18" Margin="0,0,0,10"/>
-                                <TextBlock Text="Створіть профіль та виберіть, які адаптери мають бути УВІМКНЕНІ." Foreground="Gray" Margin="0,0,0,20"/>
+                                <TextBlock Text="Профілі Мережевих Адаптерів" FontWeight="Bold" FontSize="18" Margin="0,0,0,10"/>
+                                <TextBlock Text="Налаштуйте групи адаптерів для швидкого перемикання." Foreground="Gray" Margin="0,0,0,20"/>
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="250"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-
-                                    <ListBox x:Name="ListProfiles" Grid.Column="0" Height="300" Margin="0,0,20,0" 
-                                             DisplayMemberPath="ProfileName" SelectionChanged="ListProfiles_SelectionChanged"/>
-
+                                    <ListBox x:Name="ListProfiles" Grid.Column="0" Height="250" Margin="0,0,20,0" DisplayMemberPath="ProfileName" SelectionChanged="ListProfiles_SelectionChanged"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Редагування профілю" FontWeight="Bold" Margin="0,0,0,10"/>
-
+                                        <TextBlock Text="Створити / Редагувати" FontWeight="Bold" Margin="0,0,0,10"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                                            <TextBox x:Name="TxtProfName" Width="200" Style="{StaticResource ModernTextBox}" Tag="Назва профілю (напр. Дім)"/>
-                                            <Button Content="➕ Створити" Click="BtnAddProfile_Click" Style="{StaticResource ModernBtn}" Margin="10,0,0,0"/>
+                                            <TextBox x:Name="TxtProfName" Width="200" Style="{StaticResource ModernTextBox}"/>
+                                            <Button Content="➕ Новий" Click="BtnAddProfile_Click" Style="{StaticResource ModernBtn}" Margin="10,0,0,0"/>
                                         </StackPanel>
-
                                         <Border Height="1" Background="#E2E8F0" Margin="0,10"/>
-
-                                        <TextBlock Text="Відмітьте адаптери, які будуть працювати в цьому профілі:" Margin="0,10,0,10"/>
-
-                                        <ScrollViewer Height="150" VerticalScrollBarVisibility="Auto">
+                                        <TextBlock Text="Виберіть адаптери для профілю:" Margin="0,10,0,10"/>
+                                        <ScrollViewer Height="120" VerticalScrollBarVisibility="Auto">
                                             <StackPanel x:Name="PanelProfileAdapters"/>
                                         </ScrollViewer>
-
                                         <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                                            <Button x:Name="BtnSaveProfile" Content="💾 Зберегти зміни" Click="BtnSaveProfile_Click" Style="{StaticResource ModernBtn}" IsEnabled="False"/>
+                                            <Button x:Name="BtnSaveProfile" Content="💾 Оновити" Click="BtnSaveProfile_Click" Style="{StaticResource ModernBtn}" IsEnabled="False"/>
                                             <Button x:Name="BtnDeleteProfile" Content="❌ Видалити" Click="BtnDeleteProfile_Click" Style="{StaticResource ModernBtn}" Background="{StaticResource DangerColor}" Margin="10,0,0,0" IsEnabled="False"/>
+                                            <Button x:Name="BtnApplyProfile" Content="✅ Застосувати" Click="BtnApplyProfile_Click" Style="{StaticResource ModernBtn}" Background="{StaticResource SecondaryColor}" Margin="10,0,0,0" IsEnabled="False"/>
                                         </StackPanel>
-
-                                        <Border Height="1" Background="#E2E8F0" Margin="0,20"/>
-
-                                        <Button x:Name="BtnApplyProfile" Content="✅ ЗАСТОСУВАТИ ПРОФІЛЬ (Увімкнути вибране)" Click="BtnApplyProfile_Click" Style="{StaticResource ModernBtn}" Background="{StaticResource SecondaryColor}" HorizontalAlignment="Left" IsEnabled="False"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -348,6 +339,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
+
         </Grid>
     </Grid>
 </Window>

@@ -4,11 +4,11 @@ using DuckNet.Repositories.Interfaces;
 using DuckNet.Services.Helpers;
 using DuckNet.Services.Implementations;
 using DuckNet.Services.Interfaces;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Microsoft.Win32;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
@@ -18,6 +18,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
+// Аліас для профілю
 using AdapterProfile = DuckNet.Data.Entities.AdapterProfile;
 
 namespace DuckNet.UI
@@ -28,6 +29,7 @@ namespace DuckNet.UI
         private readonly DeviceService _deviceService;
         private readonly AdapterService _adapterService;
         private readonly IRepository<AdapterProfile> _profileRepo;
+        private readonly SettingsService _settingsService;
 
         private DispatcherTimer _autoScanTimer;
         private bool _isMenuExpanded = true;
@@ -42,22 +44,45 @@ namespace DuckNet.UI
             _deviceService = deviceService;
             _adapterService = adapterService;
             _profileRepo = profileRepo;
+            _settingsService = new SettingsService();
 
-            // ПІДПИСКА НА СПОВІЩЕННЯ
+            // Підписка на тривоги (від батч-системи)
             _deviceService.OnSecurityAlert += (message) =>
             {
                 Dispatcher.Invoke(() => ToastWindow.Show(message));
             };
 
+            // Таймер
             _autoScanTimer = new DispatcherTimer();
-            _autoScanTimer.Interval = TimeSpan.FromSeconds(30);
             _autoScanTimer.Tick += async (s, e) => await RunScan();
+
+            // Завантаження налаштувань
+            ApplySettings();
 
             NetworkChange.NetworkAvailabilityChanged += (s, e) => RefreshAdaptersData();
 
             UpdateDashboard();
             LoadProfilesFromDb();
             RefreshAdaptersData();
+        }
+
+        private void ApplySettings()
+        {
+            var settings = _settingsService.CurrentSettings;
+            TxtScanInterval.Text = settings.ScanIntervalSeconds.ToString();
+            _autoScanTimer.Interval = TimeSpan.FromSeconds(settings.ScanIntervalSeconds);
+            ChkAutoScan.IsChecked = settings.IsAutoScanEnabled;
+
+            if (settings.IsAutoScanEnabled) _autoScanTimer.Start();
+        }
+
+        private void SaveAppSettings()
+        {
+            bool isAuto = ChkAutoScan.IsChecked == true;
+            if (int.TryParse(TxtScanInterval.Text, out int seconds))
+            {
+                _settingsService.SaveSettings(isAuto, seconds);
+            }
         }
 
         // --- DASHBOARD ---
@@ -124,35 +149,39 @@ namespace DuckNet.UI
             finally { BtnScan.IsEnabled = true; this.Cursor = System.Windows.Input.Cursors.Arrow; }
         }
 
+        // 🔥 Збереження Тексту (Custom Name)
         private void GridScanner_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
             if (e.EditAction == DataGridEditAction.Commit)
             {
-                var device = e.Row.Item as Device;
-                if (device != null)
+                Dispatcher.InvokeAsync(() =>
                 {
-                    Dispatcher.InvokeAsync(() => _deviceService.UpdateDevice(device));
-                }
+                    var device = e.Row.Item as Device;
+                    if (device != null) _deviceService.UpdateDevice(device);
+                });
             }
         }
 
-        // --- EVENTS EXPORT (NEW) ---
+        // 🔥 Збереження Галочки (Trusted) при кліку
+        private void ChkTrusted_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox cb && cb.DataContext is Device device)
+            {
+                // Примусово оновлюємо значення і зберігаємо
+                device.IsTrusted = cb.IsChecked == true;
+                _deviceService.UpdateDevice(device);
+            }
+        }
+
+        // --- EVENTS EXPORT ---
         private void BtnExportEvents_Click(object sender, RoutedEventArgs e)
         {
-            if (DateExport.SelectedDate == null)
-            {
-                MessageBox.Show("Будь ласка, виберіть дату.");
-                return;
-            }
+            if (DateExport.SelectedDate == null) { MessageBox.Show("Виберіть дату."); return; }
 
             DateTime date = DateExport.SelectedDate.Value;
-            var events = _deviceService.GetEventsByDate(date).ToList(); // Переконайся, що цей метод є в DeviceService
+            var events = _deviceService.GetEventsByDate(date).ToList();
 
-            if (events.Count == 0)
-            {
-                MessageBox.Show("Подій за цю дату немає.");
-                return;
-            }
+            if (events.Count == 0) { MessageBox.Show("Немає подій."); return; }
 
             SaveFileDialog sfd = new SaveFileDialog { Filter = "Text file (*.txt)|*.txt", FileName = $"Events_{date:yyyy-MM-dd}.txt" };
             if (sfd.ShowDialog() == true)
@@ -163,12 +192,9 @@ namespace DuckNet.UI
                     {
                         sw.WriteLine($"DuckNet Log - {date:dd.MM.yyyy}");
                         sw.WriteLine("--------------------------------");
-                        foreach (var ev in events)
-                        {
-                            sw.WriteLine($"[{ev.Timestamp:HH:mm:ss}] {ev.Message}");
-                        }
+                        foreach (var ev in events) sw.WriteLine($"[{ev.Timestamp:HH:mm:ss}] {ev.Message}");
                     }
-                    MessageBox.Show("Файл збережено!");
+                    MessageBox.Show("Збережено!");
                 }
                 catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
             }
@@ -177,15 +203,38 @@ namespace DuckNet.UI
         // --- SETTINGS ---
         private void SaveScanInterval_Click(object sender, RoutedEventArgs e)
         {
-            if (int.TryParse(TxtScanInterval.Text, out int seconds) && seconds > 0)
+            if (int.TryParse(TxtScanInterval.Text, out int seconds) && seconds > 5)
             {
                 _autoScanTimer.Interval = TimeSpan.FromSeconds(seconds);
-                MessageBox.Show($"Оновлено: {seconds} с");
+                SaveAppSettings();
+                MessageBox.Show($"Інтервал: {seconds} с");
             }
+            else MessageBox.Show("Введіть число > 5");
         }
 
-        private void ChkAutoScan_Checked(object sender, RoutedEventArgs e) => _autoScanTimer.Start();
-        private void ChkAutoScan_Unchecked(object sender, RoutedEventArgs e) => _autoScanTimer.Stop();
+        private void ChkAutoScan_Checked(object sender, RoutedEventArgs e)
+        {
+            _autoScanTimer.Start();
+            SaveAppSettings();
+        }
+
+        private void ChkAutoScan_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _autoScanTimer.Stop();
+            SaveAppSettings();
+        }
+
+        private void BtnClearHistory_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Очистити все?", "Увага", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                _deviceService.ClearAllHistory();
+                UpdateDashboard();
+                GridScanner.ItemsSource = null;
+                GridAllEvents.ItemsSource = null;
+                GridHistory.ItemsSource = null;
+            }
+        }
 
         // --- ADAPTERS ---
         private void RefreshAdaptersData()
@@ -206,6 +255,7 @@ namespace DuckNet.UI
 
                 this.Cursor = System.Windows.Input.Cursors.Wait;
                 await Task.Run(() => _adapterService.ToggleAdapter(adapter.NetConnectionId, enable));
+                // Чекаємо поки Windows оновить статус
                 await Task.Delay(2000);
                 RefreshAdaptersData();
                 this.Cursor = System.Windows.Input.Cursors.Arrow;
@@ -274,7 +324,7 @@ namespace DuckNet.UI
                 profile.ActiveAdaptersData = string.Join(",", list);
                 profile.ProfileName = TxtProfName.Text;
                 _profileRepo.Update(profile); _profileRepo.Save(); LoadProfilesFromDb();
-                MessageBox.Show("Збережено!");
+                MessageBox.Show("Оновлено!");
             }
         }
 
@@ -305,25 +355,16 @@ namespace DuckNet.UI
                         _adapterService.ToggleAdapter(a.NetConnectionId, active.Contains(a.NetConnectionId));
                     }
                 });
-                await Task.Delay(3000); RefreshAdaptersData(); MessageBox.Show("Готово!");
+                await Task.Delay(3000); RefreshAdaptersData(); MessageBox.Show("Застосовано!");
             }
             catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
             finally { this.Cursor = System.Windows.Input.Cursors.Arrow; }
-        }
-
-        private void BtnClearHistory_Click(object sender, RoutedEventArgs e)
-        {
-            if (MessageBox.Show("Видалити все?", "Увага", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            {
-                _deviceService.ClearAllHistory(); UpdateDashboard(); GridScanner.ItemsSource = null; GridAllEvents.ItemsSource = null;
-            }
         }
 
         // --- DIAGNOSTICS ---
         private async void BtnPing_Click(object sender, RoutedEventArgs e)
         {
             if (_isPinging) { _isPinging = false; (sender as Button).Content = "Ping"; return; }
-
             _isPinging = true; (sender as Button).Content = "Stop";
             string target = TxtPingTarget.Text;
             Ping p = new Ping();
@@ -356,7 +397,6 @@ namespace DuckNet.UI
                     PingOptions options = new PingOptions(1, true);
                     Stopwatch sw = new Stopwatch();
                     byte[] buffer = new byte[32];
-
                     for (int ttl = 1; ttl <= 30; ttl++)
                     {
                         options.Ttl = ttl;
@@ -366,9 +406,7 @@ namespace DuckNet.UI
                             PingReply reply = pinger.Send(target, 1000, buffer, options);
                             sw.Stop();
                             long t = sw.ElapsedMilliseconds == 0 ? 1 : sw.ElapsedMilliseconds;
-
                             Dispatcher.Invoke(() => { TxtPingResult.AppendText($"{ttl}\t{t}ms\t{reply.Status}\t{reply.Address}\n"); TxtPingResult.ScrollToEnd(); });
-
                             if (reply.Status == IPStatus.Success) break;
                         }
                         catch (Exception ex) { Dispatcher.Invoke(() => TxtPingResult.AppendText($"{ttl}\tError: {ex.Message}\n")); }
@@ -388,6 +426,7 @@ namespace DuckNet.UI
             ViewAdapters.Visibility = Visibility.Collapsed;
             ViewDiagnostics.Visibility = Visibility.Collapsed;
             ViewSettings.Visibility = Visibility.Collapsed;
+            ViewHistory.Visibility = Visibility.Collapsed;
         }
 
         private void BtnCollapseMenu_Click(object sender, RoutedEventArgs e)
@@ -400,6 +439,7 @@ namespace DuckNet.UI
         private void Nav_Dashboard_Click(object sender, RoutedEventArgs e) { HideAll(); ViewDashboard.Visibility = Visibility.Visible; UpdateDashboard(); }
         private void Nav_Scanner_Click(object sender, RoutedEventArgs e) { HideAll(); ViewScanner.Visibility = Visibility.Visible; GridScanner.ItemsSource = _deviceService.GetAllDevices(); }
         private void Nav_Events_Click(object sender, RoutedEventArgs e) { HideAll(); ViewEvents.Visibility = Visibility.Visible; GridAllEvents.ItemsSource = _deviceService.GetRecentEvents(); }
+        private void Nav_History_Click(object sender, RoutedEventArgs e) { HideAll(); ViewHistory.Visibility = Visibility.Visible; GridHistory.ItemsSource = _deviceService.GetScanHistory().OrderByDescending(h => h.ScanTime).ToList(); }
         private void Nav_Adapters_Click(object sender, RoutedEventArgs e) { HideAll(); ViewAdapters.Visibility = Visibility.Visible; RefreshAdaptersData(); }
         private void Nav_Diagnostics_Click(object sender, RoutedEventArgs e) { HideAll(); ViewDiagnostics.Visibility = Visibility.Visible; }
         private void Nav_Settings_Click(object sender, RoutedEventArgs e) { HideAll(); ViewSettings.Visibility = Visibility.Visible; }
