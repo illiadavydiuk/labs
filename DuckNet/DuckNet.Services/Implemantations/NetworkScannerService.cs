@@ -55,7 +55,7 @@ namespace DuckNet.Services.Implementations
             {
                 using (var pinger = new Ping())
                 {
-                    PingReply reply = pinger.Send(ip, 100); // Таймаут 100мс (швидкий пінг)
+                    PingReply reply = pinger.Send(ip, 500); // Таймаут 100мс (швидкий пінг)
                     return reply.Status == IPStatus.Success;
                 }
             }

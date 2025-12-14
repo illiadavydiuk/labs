@@ -2,4 +2,5 @@
   <Project Path="DuckNet.Data/DuckNet.Data.csproj" />
   <Project Path="DuckNet.Repositories/DuckNet.Repositories.csproj" />
   <Project Path="DuckNet.Services/DuckNet.Services.csproj" />
+  <Project Path="DuckNet.UI/DuckNet.UI.csproj" Id="4f479ecc-5161-4cd0-b700-0baeb833f6fe" />
 </Solution>

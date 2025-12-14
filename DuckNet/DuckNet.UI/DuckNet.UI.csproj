@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DuckNet.Data\DuckNet.Data.csproj" />
+    <ProjectReference Include="..\DuckNet.Repositories\DuckNet.Repositories.csproj" />
+    <ProjectReference Include="..\DuckNet.Services\DuckNet.Services.csproj" />
+  </ItemGroup>
+
+</Project>
