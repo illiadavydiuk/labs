@@ -29,6 +29,7 @@ namespace DuckNet.UI // 🔥 Перевір, щоб тут було UI (вели
             var deviceService = new DeviceService(deviceRepo, eventRepo); // 🔥 Передаємо eventRepo
             var adapterService = new AdapterService();
             // ...
+
             // 4. Головне вікно
             // 🔥 2. Передаємо adapterService третім параметром!
             _mainWindow = new MainWindow(scannerService, deviceService, adapterService);

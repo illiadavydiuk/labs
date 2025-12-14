@@ -90,5 +90,25 @@ namespace DuckNet.Services.Implementations
                 DeviceId = deviceId
             });
         }
+        public void ClearAllHistory()
+        {
+            // Видаляємо всі пристрої
+            var allDevices = _deviceRepo.GetAll().ToList();
+            foreach (var d in allDevices)
+            {
+                _deviceRepo.Delete(d.Id); // Припускаємо, що в репозиторії є Delete(id)
+            }
+
+            // Видаляємо всі події (лога)
+            var allEvents = _eventRepo.GetAll().ToList();
+            foreach (var e in allEvents)
+            {
+                _eventRepo.Delete(e.Id);
+            }
+
+            _deviceRepo.Save();
+            _eventRepo.Save();
+        }
     }
+
 }

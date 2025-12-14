@@ -30,9 +30,11 @@ namespace DuckNet.Services.Implementations
 
                     if (PingHost(ip))
                     {
-                        // Якщо пристрій відповів на Ping
                         string mac = ArpHelper.GetMacAddress(ip);
                         string host = GetHostname(ip);
+
+                        // Якщо Dns не дав результату, пробуємо просто повернути IP як ім'я, щоб не було пусто
+                        if (host == "Unknown") host = $"Device ({ip})";
 
                         foundDevices.Add(new Device
                         {
@@ -55,14 +57,12 @@ namespace DuckNet.Services.Implementations
             {
                 using (var pinger = new Ping())
                 {
-                    PingReply reply = pinger.Send(ip, 500); // Таймаут 100мс (швидкий пінг)
+                    // Збільшуємо до 2000 мс (2 сек), щоб знайти всіх
+                    PingReply reply = pinger.Send(ip, 2000);
                     return reply.Status == IPStatus.Success;
                 }
             }
-            catch
-            {
-                return false;
-            }
+            catch { return false; }
         }
 
         private string GetHostname(string ip)

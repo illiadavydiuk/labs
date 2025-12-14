@@ -1,14 +1,13 @@
-﻿using DuckNet.Data.Models; // 🔥 Тепер беремо з Data
+﻿using DuckNet.Data.Models;
 using System.Collections.Generic;
+using System.Diagnostics; // Для Process
 using System.Management;
+using System.Threading.Tasks;
 
 namespace DuckNet.Services.Implementations
 {
     public class AdapterService
     {
-        // Цей сервіс не потребує IRepository, бо працює з WMI напряму
-        // Це відповідає правилу: не плодити репозиторії там, де немає БД
-
         public List<NetworkAdapterInfo> GetAdapters()
         {
             var adapters = new List<NetworkAdapterInfo>();
@@ -31,17 +30,40 @@ namespace DuckNet.Services.Implementations
             return adapters;
         }
 
-        public void ToggleAdapter(int deviceId, bool enable)
+        public void ToggleAdapter(string connectionName, bool enable)
         {
-            string query = $"SELECT * FROM Win32_NetworkAdapter WHERE DeviceID = '{deviceId}'";
-            using (var searcher = new ManagementObjectSearcher(query))
+            string status = enable ? "enable" : "disable";
+            RunNetsh($"interface set interface \"{connectionName}\" admin={status}");
+        }
+
+        // 🔥 НОВИЙ МЕТОД: Зміна профілю (IP/DNS)
+        public void SetAdapterProfile(string adapterName, string profileType)
+        {
+            if (profileType == "DHCP")
             {
-                foreach (ManagementObject obj in searcher.Get())
-                {
-                    string methodName = enable ? "Enable" : "Disable";
-                    obj.InvokeMethod(methodName, null);
-                }
+                // Автоматичний IP та DNS
+                RunNetsh($"interface ip set address \"{adapterName}\" dhcp");
+                RunNetsh($"interface ip set dns \"{adapterName}\" dhcp");
             }
+            else if (profileType == "Static_Work")
+            {
+                // Приклад статичного IP (можна змінити під свої потреби)
+                RunNetsh($"interface ip set address \"{adapterName}\" static 192.168.1.55 255.255.255.0 192.168.1.1");
+                RunNetsh($"interface ip set dns \"{adapterName}\" static 8.8.8.8");
+            }
+        }
+
+        private void RunNetsh(string arguments)
+        {
+            var psi = new ProcessStartInfo("netsh", arguments)
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                Verb = "runas", // Права адміна
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+            var p = Process.Start(psi);
+            p?.WaitForExit();
         }
 
         private string ParseStatus(string statusCode)
