@@ -9,6 +9,6 @@ namespace DuckNet.Data.Entities
 
         public DateTime ScanTime { get; set; }
         public int DevicesFound { get; set; }
-        public int AveragePingMs { get; set; } // Середній пінг по мережі (опціонально)
+        public int AveragePingMs { get; set; }
     }
 }

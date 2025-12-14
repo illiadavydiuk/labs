@@ -8,12 +8,9 @@ namespace DuckNet.Data.Entities
         public int Id { get; set; }
 
         [Required]
-        public string ProfileName { get; set; } = string.Empty; // "Дім", "Робота"
+        public string ProfileName { get; set; } = string.Empty;
 
-        public bool IsDhcpEnabled { get; set; }
-        public string? StaticIp { get; set; }
-        public string? SubnetMask { get; set; }
-        public string? Gateway { get; set; }
-        public string? Dns { get; set; }
+
+        public string ActiveAdaptersData { get; set; } = string.Empty;
     }
 }

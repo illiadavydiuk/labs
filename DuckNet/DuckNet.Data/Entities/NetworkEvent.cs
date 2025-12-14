@@ -14,7 +14,7 @@ namespace DuckNet.Data.Entities
         public EventType Type { get; set; }
         public string Message { get; set; } = string.Empty;
 
-        // Зв'язок з пристроєм (опціональний, бо подія може бути загальною)
+
         public int? DeviceId { get; set; }
         [ForeignKey("DeviceId")]
         public virtual Device? Device { get; set; }

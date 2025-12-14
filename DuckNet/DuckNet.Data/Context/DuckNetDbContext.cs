@@ -5,7 +5,6 @@ namespace DuckNet.Data.Context
 {
     public class DuckNetDbContext : DbContext
     {
-        // Наші таблиці
         public DbSet<Device> Devices => Set<Device>();
         public DbSet<ScanSession> ScanSessions => Set<ScanSession>();
         public DbSet<NetworkEvent> NetworkEvents => Set<NetworkEvent>();
@@ -20,9 +19,8 @@ namespace DuckNet.Data.Context
             if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseSqlServer(
-                    // Змінив назву бази на DuckNetDB, решта налаштувань як у вашому прикладі
                     "Server=localhost,1433;Database=DuckNetDB;User Id=sa;Password=MyStr0ng!Passw0rd;TrustServerCertificate=True;",
-                    sql => sql.EnableRetryOnFailure() // Стійкість до збоїв мережі
+                    sql => sql.EnableRetryOnFailure() 
                 );
             }
         }
@@ -31,7 +29,7 @@ namespace DuckNet.Data.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            // Налаштування зв'язку: Один пристрій -> Багато подій
+
             modelBuilder.Entity<NetworkEvent>()
                 .HasOne(e => e.Device)          // У події є один Пристрій
                 .WithMany(d => d.Events)        // У пристрою є багато Подій

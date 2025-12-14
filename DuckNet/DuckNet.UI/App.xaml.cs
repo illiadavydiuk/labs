@@ -1,10 +1,10 @@
 ﻿using System.Windows;
 using DuckNet.Data.Context;
-using DuckNet.Data.Entities;
+using DuckNet.Data.Entities; // Тут лежить AdapterProfile
 using DuckNet.Repositories.Implementations;
 using DuckNet.Services.Implementations;
 
-namespace DuckNet.UI // 🔥 Перевір, щоб тут було UI (великими)
+namespace DuckNet.UI
 {
     public partial class App : Application
     {
@@ -15,24 +15,22 @@ namespace DuckNet.UI // 🔥 Перевір, щоб тут було UI (вели
         {
             base.OnStartup(e);
 
-            // 1. БД
             _dbContext = new DuckNetDbContext();
             _dbContext.Database.EnsureCreated();
 
-            // ...
-            // 2. Репозиторії
+            // Репозиторії
             var deviceRepo = new Repository<Device>(_dbContext);
-            var eventRepo = new Repository<NetworkEvent>(_dbContext); // 🔥 НОВЕ
+            var eventRepo = new Repository<NetworkEvent>(_dbContext);
+            var scanRepo = new Repository<ScanSession>(_dbContext);
+            var profileRepo = new Repository<AdapterProfile>(_dbContext); // 🔥 НОВЕ: Репо для профілів
 
-            // 3. Сервіси
+            // Сервіси
             var scannerService = new NetworkScannerService();
-            var deviceService = new DeviceService(deviceRepo, eventRepo); // 🔥 Передаємо eventRepo
+            var deviceService = new DeviceService(deviceRepo, eventRepo, scanRepo);
             var adapterService = new AdapterService();
-            // ...
 
-            // 4. Головне вікно
-            // 🔥 2. Передаємо adapterService третім параметром!
-            _mainWindow = new MainWindow(scannerService, deviceService, adapterService);
+            // 🔥 Передаємо profileRepo у вікно
+            _mainWindow = new MainWindow(scannerService, deviceService, adapterService, profileRepo);
             _mainWindow.Show();
         }
 

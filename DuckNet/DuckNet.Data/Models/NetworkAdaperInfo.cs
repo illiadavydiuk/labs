@@ -1,6 +1,5 @@
 ﻿namespace DuckNet.Data.Models
 {
-    // Цей клас живе в Data, бо це спільна модель даних для всіх шарів
     public class NetworkAdapterInfo
     {
         public int DeviceId { get; set; }

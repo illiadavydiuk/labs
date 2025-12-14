@@ -8,6 +8,30 @@
 
     <Window.Resources>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+
+        <Style x:Key="CenteredCell" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="5,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border x:Name="border" BorderBrush="Transparent" BorderThickness="0" Background="Transparent" SnapsToDevicePixels="True">
+                            <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" TargetName="border" Value="#E0F2FE"/>
+                                <Setter Property="Foreground" Value="Black"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -41,7 +65,7 @@
                     <Button Tag="📡" Content="Сканер" Click="Nav_Scanner_Click" Style="{StaticResource MenuBtn}"/>
                     <Button Tag="📜" Content="Журнал подій" Click="Nav_Events_Click" Style="{StaticResource MenuBtn}"/>
                     <Button Tag="🔌" Content="Адаптери" Click="Nav_Adapters_Click" Style="{StaticResource MenuBtn}"/>
-                    <Button Tag="🩺" Content="Діагностика" Click="Nav_Diagnostics_Click" Style="{StaticResource MenuBtn}"/>
+                    <Button Tag="🛠" Content="Діагностика" Click="Nav_Diagnostics_Click" Style="{StaticResource MenuBtn}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Margin="0,0,0,20">
@@ -117,7 +141,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <TextBlock Text="Сканер пристроїв" FontSize="28" FontWeight="Bold" Margin="0,0,0,25"/>
+
                 <Grid Grid.Row="0" Margin="0,0,0,25">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -128,18 +152,45 @@
                     <Button Grid.Column="1" x:Name="BtnScan" Content="🔍 Сканувати" Click="BtnScan_Click" Style="{StaticResource ModernBtn}" Margin="15,0,0,0"/>
                     <CheckBox Grid.Column="2" x:Name="ChkAutoScan" Content="Автосканування" VerticalAlignment="Center" Margin="25,0,0,0" Checked="ChkAutoScan_Checked" Unchecked="ChkAutoScan_Unchecked"/>
                 </Grid>
-                <DataGrid Grid.Row="1" x:Name="GridScanner" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="60">
+
+                <DataGrid Grid.Row="1" x:Name="GridScanner" AutoGenerateColumns="False" 
+                          CanUserAddRows="False" RowHeight="60"
+                          IsReadOnly="False" 
+                          CellEditEnding="GridScanner_CellEditEnding">
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Width="70" Header="Статус">
+                        <DataGridTemplateColumn Width="50" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Ellipse Width="12" Height="12" Fill="{Binding IsOnline, Converter={StaticResource BoolToColorConverter}}" HorizontalAlignment="Center"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="IP Адреса" Binding="{Binding IpAddress}" Width="150" FontWeight="SemiBold"/>
-                        <DataGridTextColumn Header="MAC Адреса" Binding="{Binding MacAddress}" Width="160" Foreground="{StaticResource TextLight}" FontFamily="Consolas"/>
-                        <DataGridTextColumn Header="Ім'я пристрою" Binding="{Binding Hostname}" Width="*"/>
+
+                        <DataGridTextColumn Header="IP" Binding="{Binding IpAddress}" Width="130" IsReadOnly="True" ElementStyle="{StaticResource CenteredCell}" FontWeight="Bold"/>
+                        <DataGridTextColumn Header="MAC" Binding="{Binding MacAddress}" Width="140" IsReadOnly="True" ElementStyle="{StaticResource CenteredCell}" Foreground="Gray"/>
+                        <DataGridTextColumn Header="Hostname / Vendor" Binding="{Binding Hostname}" Width="180" IsReadOnly="True" ElementStyle="{StaticResource CenteredCell}"/>
+
+                        <DataGridTextColumn Header="Моя Назва (Ред.)" Binding="{Binding CustomName, UpdateSourceTrigger=PropertyChanged}" Width="180">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                            <DataGridTextColumn.EditingElementStyle>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.EditingElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridCheckBoxColumn Header="Довірений" Binding="{Binding IsTrusted, UpdateSourceTrigger=PropertyChanged}" Width="100" IsReadOnly="False">
+                            <DataGridCheckBoxColumn.ElementStyle>
+                                <Style TargetType="CheckBox">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridCheckBoxColumn.ElementStyle>
+                        </DataGridCheckBoxColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
@@ -149,11 +200,19 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <TextBlock Text="Журнал подій" FontSize="28" FontWeight="Bold" Margin="0,0,0,25"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,25">
+                    <TextBlock Text="Журнал подій" FontSize="28" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                    <TextBlock Text="Експорт за:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <DatePicker x:Name="DateExport" Width="120" VerticalContentAlignment="Center"/>
+                    <Button Content="💾 Експорт в TXT" Click="BtnExportEvents_Click" Style="{StaticResource ModernBtn}" Margin="10,0,0,0" Background="{StaticResource SecondaryColor}"/>
+                </StackPanel>
+
                 <DataGrid Grid.Row="1" x:Name="GridAllEvents" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="50">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Час" Binding="{Binding Timestamp, StringFormat='dd.MM.yyyy HH:mm:ss'}" Width="180"/>
-                        <DataGridTextColumn Header="Подія" Binding="{Binding Message}" Width="*"/>
+                        <DataGridTextColumn Header="Час" Binding="{Binding Timestamp, StringFormat='dd.MM.yyyy HH:mm:ss'}" Width="180" ElementStyle="{StaticResource CenteredCell}"/>
+                        <DataGridTextColumn Header="Подія" Binding="{Binding Message}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
@@ -166,20 +225,32 @@
                 <TextBlock Text="Керування адаптерами" FontSize="28" FontWeight="Bold" Margin="0,0,0,25"/>
                 <DataGrid Grid.Row="1" x:Name="GridAdapters" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="70">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Інтерфейс" Binding="{Binding NetConnectionId}" Width="250" FontWeight="Bold" FontSize="15">
+
+                        <DataGridTextColumn Header="Інтерфейс" Binding="{Binding NetConnectionId}" Width="Auto" FontWeight="Bold" FontSize="15">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                     <Setter Property="VerticalAlignment" Value="Center"/>
-                                    <Setter Property="Margin" Value="5,0"/>
+                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                    <Setter Property="Margin" Value="10,0"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Обладнання" Binding="{Binding Name}" Width="*"/>
+
+                        <DataGridTextColumn Header="Обладнання" Binding="{Binding Name}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                    <Setter Property="Margin" Value="10,0"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
                         <DataGridTemplateColumn Header="Стан" Width="150">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0">
                                         <CheckBox IsChecked="{Binding IsEnabled, Mode=OneWay}" Style="{StaticResource ToggleSwitchStyle}" Click="ToggleAdapter_Click"/>
                                         <TextBlock Text="{Binding Status}" Margin="15,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextLight}"/>
                                     </StackPanel>
@@ -216,63 +287,67 @@
 
                         <Border Background="{StaticResource CardColor}" Padding="30" CornerRadius="16" Margin="0,0,0,25">
                             <StackPanel>
-                                <TextBlock Text="Загальні" FontWeight="Bold" FontSize="18" Margin="0,0,0,15"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                                    <TextBlock Text="Інтервал автосканування (хв):" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                                    <TextBox x:Name="TxtScanInterval" Text="5" Width="80" Style="{StaticResource ModernTextBox}"/>
-                                    <Button Content="Зберегти" Click="BtnSaveSettings_Click" Style="{StaticResource ModernBtn}" Margin="15,0,0,0"/>
+                                <TextBlock Text="Керування даними" FontWeight="Bold" FontSize="18" Margin="0,0,0,15"/>
+                                <Button Content="🗑 Очистити всю базу даних" Click="BtnClearHistory_Click" Style="{StaticResource ModernBtn}" Background="{StaticResource DangerColor}" HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource CardColor}" Padding="30" CornerRadius="16" Margin="0,0,0,25">
+                            <StackPanel>
+                                <TextBlock Text="Автосканування" FontWeight="Bold" FontSize="18" Margin="0,0,0,15"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Інтервал (секунд):" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBox x:Name="TxtScanInterval" Width="80" Text="30" Style="{StaticResource ModernTextBox}"/>
+                                    <Button Content="💾 Зберегти" Click="SaveScanInterval_Click" Style="{StaticResource ModernBtn}" Margin="15,0,0,0"/>
                                 </StackPanel>
-                                <Button Content="🗑 Очистити історію пристроїв" Click="BtnClearHistory_Click" Style="{StaticResource ModernBtn}" Background="{StaticResource DangerColor}" HorizontalAlignment="Left"/>
                             </StackPanel>
                         </Border>
 
                         <Border Background="{StaticResource CardColor}" Padding="30" CornerRadius="16">
                             <StackPanel>
-                                <TextBlock Text="Керування Профілями Адаптерів" FontWeight="Bold" FontSize="18" Margin="0,0,0,5"/>
-                                <TextBlock Text="Виберіть профіль і застосуйте. Адаптери, які не в списку, будуть вимкнені." Foreground="{StaticResource TextLight}" Margin="0,0,0,20"/>
+                                <TextBlock Text="Профілі Адаптерів" FontWeight="Bold" FontSize="18" Margin="0,0,0,10"/>
+                                <TextBlock Text="Створіть профіль та виберіть, які адаптери мають бути УВІМКНЕНІ." Foreground="Gray" Margin="0,0,0,20"/>
 
-                                <Grid Height="300">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="200"/>
+                                        <ColumnDefinition Width="250"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Border Grid.Column="0" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0" Margin="0,0,20,0">
-                                        <ListBox x:Name="ListProfiles" SelectionChanged="ListProfiles_SelectionChanged" BorderThickness="0" Background="Transparent" FontSize="14">
-                                            <ListBox.ItemContainerStyle>
-                                                <Style TargetType="ListBoxItem">
-                                                    <Setter Property="Padding" Value="10"/>
-                                                    <Setter Property="Cursor" Value="Hand"/>
-                                                </Style>
-                                            </ListBox.ItemContainerStyle>
-                                        </ListBox>
-                                    </Border>
+                                    <ListBox x:Name="ListProfiles" Grid.Column="0" Height="300" Margin="0,0,20,0" 
+                                             DisplayMemberPath="ProfileName" SelectionChanged="ListProfiles_SelectionChanged"/>
 
-                                    <Grid Grid.Column="1">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Редагування профілю" FontWeight="Bold" Margin="0,0,0,10"/>
 
-                                        <ScrollViewer Grid.Row="0">
-                                            <StackPanel x:Name="PanelProfileAdapters">
-                                                <TextBlock Text="Оберіть профіль зліва..." Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                            </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                            <TextBox x:Name="TxtProfName" Width="200" Style="{StaticResource ModernTextBox}" Tag="Назва профілю (напр. Дім)"/>
+                                            <Button Content="➕ Створити" Click="BtnAddProfile_Click" Style="{StaticResource ModernBtn}" Margin="10,0,0,0"/>
+                                        </StackPanel>
+
+                                        <Border Height="1" Background="#E2E8F0" Margin="0,10"/>
+
+                                        <TextBlock Text="Відмітьте адаптери, які будуть працювати в цьому профілі:" Margin="0,10,0,10"/>
+
+                                        <ScrollViewer Height="150" VerticalScrollBarVisibility="Auto">
+                                            <StackPanel x:Name="PanelProfileAdapters"/>
                                         </ScrollViewer>
 
-                                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-                                            <Button x:Name="BtnSaveProfile" Content="💾 Зберегти зміни" Click="BtnSaveProfile_Click" Style="{StaticResource ModernBtn}" Background="{StaticResource SecondaryColor}" Margin="0,0,10,0" IsEnabled="False"/>
-                                            <Button x:Name="BtnApplyProfile" Content="✅ Застосувати Профіль" Click="BtnApplyProfile_Click" Style="{StaticResource ModernBtn}" IsEnabled="False"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                                            <Button x:Name="BtnSaveProfile" Content="💾 Зберегти зміни" Click="BtnSaveProfile_Click" Style="{StaticResource ModernBtn}" IsEnabled="False"/>
+                                            <Button x:Name="BtnDeleteProfile" Content="❌ Видалити" Click="BtnDeleteProfile_Click" Style="{StaticResource ModernBtn}" Background="{StaticResource DangerColor}" Margin="10,0,0,0" IsEnabled="False"/>
                                         </StackPanel>
-                                    </Grid>
+
+                                        <Border Height="1" Background="#E2E8F0" Margin="0,20"/>
+
+                                        <Button x:Name="BtnApplyProfile" Content="✅ ЗАСТОСУВАТИ ПРОФІЛЬ (Увімкнути вибране)" Click="BtnApplyProfile_Click" Style="{StaticResource ModernBtn}" Background="{StaticResource SecondaryColor}" HorizontalAlignment="Left" IsEnabled="False"/>
+                                    </StackPanel>
                                 </Grid>
                             </StackPanel>
                         </Border>
-
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
-
         </Grid>
     </Grid>
 </Window>

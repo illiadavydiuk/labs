@@ -1,8 +1,8 @@
 ﻿using DuckNet.Data.Models;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics; // Для Process
+using System.Diagnostics;
 using System.Management;
-using System.Threading.Tasks;
 
 namespace DuckNet.Services.Implementations
 {
@@ -11,70 +11,104 @@ namespace DuckNet.Services.Implementations
         public List<NetworkAdapterInfo> GetAdapters()
         {
             var adapters = new List<NetworkAdapterInfo>();
-            string query = "SELECT * FROM Win32_NetworkAdapter WHERE NetConnectionID != NULL";
 
-            using (var searcher = new ManagementObjectSearcher(query))
+            try
             {
-                foreach (ManagementObject obj in searcher.Get())
+                string query = "SELECT * FROM Win32_NetworkAdapter WHERE NetConnectionID IS NOT NULL";
+
+                using (var searcher = new ManagementObjectSearcher(query))
                 {
-                    adapters.Add(new NetworkAdapterInfo
+                    foreach (ManagementObject obj in searcher.Get())
                     {
-                        DeviceId = int.Parse(obj["DeviceID"].ToString()),
-                        Name = obj["Name"]?.ToString(),
-                        NetConnectionId = obj["NetConnectionID"]?.ToString(),
-                        Status = ParseStatus(obj["NetConnectionStatus"]?.ToString()),
-                        IsEnabled = obj["NetConnectionStatus"]?.ToString() != "0"
-                    });
+                        var adapter = new NetworkAdapterInfo
+                        {
+                            DeviceId = Convert.ToInt32(obj["DeviceID"]),
+                            Name = obj["Name"]?.ToString(),
+                            NetConnectionId = obj["NetConnectionID"]?.ToString()
+                        };
+
+                        int configCode = 0;
+                        if (obj["ConfigManagerErrorCode"] != null)
+                        {
+                            configCode = Convert.ToInt32(obj["ConfigManagerErrorCode"]);
+                        }
+
+                        string netStatus = obj["NetConnectionStatus"]?.ToString();
+
+                        if (configCode == 22 || string.IsNullOrEmpty(netStatus))
+                        {
+                            adapter.IsEnabled = false;
+                            adapter.Status = "Вимкнено";
+                        }
+                        else
+                        {
+                            adapter.IsEnabled = true;
+
+                            if (netStatus == "2")
+                            {
+                                adapter.Status = "Підключено";
+                            }
+                            else if (netStatus == "7")
+                            {
+                                adapter.Status = "Кабель відключено";
+                            }
+                            else if (netStatus == "0")
+                            {
+                                adapter.Status = "Неактивний";
+                            }
+                            else
+                            {
+                                adapter.Status = "Увімкнено";
+                            }
+                        }
+
+                        adapters.Add(adapter);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Помилка WMI при отриманні адаптерів: " + ex.Message);
+            }
+
             return adapters;
         }
 
         public void ToggleAdapter(string connectionName, bool enable)
         {
             string status = enable ? "enable" : "disable";
-            RunNetsh($"interface set interface \"{connectionName}\" admin={status}");
+            string arguments = $"interface set interface \"{connectionName}\" admin={status}";
+            RunNetsh(arguments);
         }
 
-        // 🔥 НОВИЙ МЕТОД: Зміна профілю (IP/DNS)
         public void SetAdapterProfile(string adapterName, string profileType)
         {
             if (profileType == "DHCP")
             {
-                // Автоматичний IP та DNS
                 RunNetsh($"interface ip set address \"{adapterName}\" dhcp");
                 RunNetsh($"interface ip set dns \"{adapterName}\" dhcp");
-            }
-            else if (profileType == "Static_Work")
-            {
-                // Приклад статичного IP (можна змінити під свої потреби)
-                RunNetsh($"interface ip set address \"{adapterName}\" static 192.168.1.55 255.255.255.0 192.168.1.1");
-                RunNetsh($"interface ip set dns \"{adapterName}\" static 8.8.8.8");
             }
         }
 
         private void RunNetsh(string arguments)
         {
-            var psi = new ProcessStartInfo("netsh", arguments)
+            try
             {
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                Verb = "runas", // Права адміна
-                WindowStyle = ProcessWindowStyle.Hidden
-            };
-            var p = Process.Start(psi);
-            p?.WaitForExit();
-        }
+                var psi = new ProcessStartInfo("netsh", arguments)
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = true,
+                    Verb = "runas",
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
 
-        private string ParseStatus(string statusCode)
-        {
-            return statusCode switch
+                var p = Process.Start(psi);
+                p?.WaitForExit();
+            }
+            catch (Exception ex)
             {
-                "2" => "Підключено",
-                "7" => "Кабель відключено",
-                "0" => "Вимкнено",
-                _ => "Інше"
-            };
+                Debug.WriteLine("Помилка виконання netsh: " + ex.Message);
+            }
         }
     }
 }

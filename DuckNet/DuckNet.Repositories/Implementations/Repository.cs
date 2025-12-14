@@ -2,17 +2,15 @@
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
-using DuckNet.Data.Context; // Важливо: тут лежить DuckNetDbContext
+using DuckNet.Data.Context; 
 
-namespace DuckNet.Repositories.Implementations // 1. Виправлений namespace
+namespace DuckNet.Repositories.Implementations 
 {
     public class Repository<T> : IRepository<T> where T : class
     {
-        // 2. Використовуємо DuckNetDbContext замість SystemDbContext
         protected readonly DuckNetDbContext _context;
         protected readonly DbSet<T> _dbSet;
 
-        // 3. Конструктор приймає DuckNetDbContext
         public Repository(DuckNetDbContext context)
         {
             _context = context;

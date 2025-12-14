@@ -12,7 +12,7 @@ namespace DuckNet.UI.Converters
             if (value is bool isOnline && isOnline)
                 return new SolidColorBrush(Color.FromRgb(16, 185, 129)); // Зелений (#10B981)
 
-            return new SolidColorBrush(Color.FromRgb(239, 68, 68));   // Червоний (#EF4444)
+            return new SolidColorBrush(Color.FromRgb(239, 68, 68)); // Червоний (#EF4444)
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

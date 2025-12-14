@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema; 
 
 namespace DuckNet.Data.Entities
 {
@@ -7,17 +10,18 @@ namespace DuckNet.Data.Entities
         [Key]
         public int Id { get; set; }
 
-        public string IpAddress { get; set; } = string.Empty; // 192.168.1.105
-        public string MacAddress { get; set; } = string.Empty; // AA:BB:CC:DD:EE:FF
-        public string Hostname { get; set; } = string.Empty;  // DESKTOP-USER
-
+        public string IpAddress { get; set; } = string.Empty;
+        public string MacAddress { get; set; } = string.Empty;
+        public string Hostname { get; set; } = string.Empty;
         public bool IsOnline { get; set; }
         public DateTime LastSeen { get; set; }
-
-        // Чи це відомий нам пристрій (наприклад, "Мій телефон")
         public string? CustomName { get; set; }
         public bool IsTrusted { get; set; }
 
         public virtual ICollection<NetworkEvent> Events { get; set; } = new List<NetworkEvent>();
+
+  
+        [NotMapped]
+        public long LastPingMs { get; set; }
     }
 }

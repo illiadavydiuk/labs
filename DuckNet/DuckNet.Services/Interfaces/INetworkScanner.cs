@@ -6,6 +6,6 @@ namespace DuckNet.Services.Interfaces
 {
     public interface INetworkScanner
     {
-        Task<List<Device>> ScanNetworkAsync(string baseIp); // Наприклад "192.168.1."
+        Task<List<Device>> ScanNetworkAsync(string baseIp); 
     }
 }
