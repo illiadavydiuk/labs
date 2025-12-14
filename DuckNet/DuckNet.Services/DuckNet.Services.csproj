@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Management" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\DuckNet.Data\DuckNet.Data.csproj" />
     <ProjectReference Include="..\DuckNet.Repositories\DuckNet.Repositories.csproj" />
   </ItemGroup>
