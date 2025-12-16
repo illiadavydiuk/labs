@@ -17,4 +17,4 @@
 * [Лабораторна 1](https://www.notion.so/1-27bc06c4bd0a80feac8ed5daa4be3314?source=copy_link)
 * [Лабораторна 2](https://www.notion.so/2-2acc06c4bd0a80e288e0f248159ec4b7?source=copy_link)
 * [Лабораторна 3](https://www.notion.so/3-2b8c06c4bd0a8085b53ad3082efca07d?source=copy_link)
-* [Фінальний проєкт](https://github.com/illiadavydiuk/labs/tree/main/DuckNet)
+* [Фінальний проєкт](https://www.notion.so/DuckNet-2c9c06c4bd0a8061866fc0c717354306?source=copy_link)
