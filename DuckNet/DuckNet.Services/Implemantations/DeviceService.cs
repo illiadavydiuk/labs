@@ -12,6 +12,7 @@ namespace DuckNet.Services.Implementations
         private readonly IRepository<Device> _deviceRepo;
         private readonly IRepository<NetworkEvent> _eventRepo;
         private readonly IRepository<ScanSession> _scanRepo;
+        private readonly VendorService _vendorService;
 
         public event Action<string> OnSecurityAlert;
 
@@ -20,10 +21,13 @@ namespace DuckNet.Services.Implementations
             _deviceRepo = deviceRepo;
             _eventRepo = eventRepo;
             _scanRepo = scanRepo;
+            _vendorService = new VendorService(); 
         }
 
-        // --- Basic CRUD ---
         public IEnumerable<Device> GetAllDevices() => _deviceRepo.GetAll();
+        public IEnumerable<NetworkEvent> GetRecentEvents() => _eventRepo.GetAll().OrderByDescending(e => e.Timestamp).Take(100).ToList();
+        public IEnumerable<ScanSession> GetScanHistory() => _scanRepo.GetAll().OrderBy(s => s.ScanTime).TakeLast(20).ToList();
+        public IEnumerable<NetworkEvent> GetEventsByDate(DateTime date) => _eventRepo.GetAll().Where(e => e.Timestamp.Date == date.Date).OrderBy(e => e.Timestamp).ToList();
 
         public void UpdateDevice(Device device)
         {
@@ -31,150 +35,99 @@ namespace DuckNet.Services.Implementations
             _deviceRepo.Save();
         }
 
-        public IEnumerable<NetworkEvent> GetRecentEvents()
-        {
-            return _eventRepo.GetAll().OrderByDescending(e => e.Timestamp).Take(100).ToList();
-        }
-
-        public IEnumerable<NetworkEvent> GetEventsByDate(DateTime date)
-        {
-            return _eventRepo.GetAll()
-                             .Where(e => e.Timestamp.Date == date.Date)
-                             .OrderBy(e => e.Timestamp)
-                             .ToList();
-        }
-
-        public IEnumerable<ScanSession> GetScanHistory()
-        {
-            return _scanRepo.GetAll().OrderBy(s => s.ScanTime).TakeLast(20).ToList();
-        }
-
-        // --- CORE LOGIC ---
-
         public void UpdateDevices(List<Device> scannedDevices)
         {
             var existingDevices = _deviceRepo.GetAll().ToList();
             var now = DateTime.Now;
-
             int devicesOnlineCount = 0;
             long totalPingSum = 0;
-
-            // 🔥 Список для накопичення тривог за один цикл сканування
             List<string> currentScanAlerts = new List<string>();
 
-            // 1. ПЕРЕВІРКА ВІДКЛЮЧЕНИХ
+            // 1. Пошук відключених
             foreach (var existing in existingDevices)
             {
                 if (existing.IsOnline && !scannedDevices.Any(d => d.MacAddress == existing.MacAddress))
                 {
                     existing.IsOnline = false;
                     _deviceRepo.Update(existing);
-
-                    // fireEvent: false, бо відключення нас не так лякають
-                    LogAndNotify(EventType.DeviceDisconnected, $"Пристрій відключився: {existing.IpAddress} ({existing.Hostname})", existing.Id, true, fireEvent: false);
+                    LogAndNotify(EventType.DeviceDisconnected, $"Пристрій відключився: {existing.IpAddress}", existing.Id, true, fireEvent: false);
                 }
             }
 
-            // 2. ОБРОБКА АКТИВНИХ
+            // 2. Обробка знайдених
             foreach (var scanned in scannedDevices)
             {
                 devicesOnlineCount++;
                 totalPingSum += scanned.LastPingMs;
 
-                string vendor = MacVendorHelper.GetVendor(scanned.MacAddress);
+                // 🔥 ШУКАЄМО У ЛОКАЛЬНОМУ ФАЙЛІ OUI.TXT
+                string vendor = _vendorService.GetVendor(scanned.MacAddress);
 
                 if (scanned.Hostname == "Unknown" || scanned.Hostname.StartsWith("Device"))
                 {
-                    scanned.Hostname = $"{vendor} Device";
+                    scanned.Hostname = vendor != "Unknown" ? $"{vendor} Device" : "Unknown Device";
                 }
 
                 var existing = existingDevices.FirstOrDefault(d => d.MacAddress == scanned.MacAddress);
 
                 if (existing != null)
                 {
-                    // === ІСНУЮЧИЙ ПРИСТРІЙ ===
                     if (!existing.IsOnline)
                     {
-                        // Повернувся в мережу
                         if (!existing.IsTrusted)
                         {
-                            string msg = $"!!!! НЕДОВІРЕНИЙ ПОВЕРНУВСЯ: {scanned.IpAddress} ({vendor})";
-                            currentScanAlerts.Add(msg); // Додаємо в список тривог
-
-                            // Пишемо в лог, але НЕ викликаємо подію Event одразу (fireEvent: false)
-                            LogAndNotify(EventType.DeviceConnected, msg, existing.Id, false, fireEvent: false);
+                            currentScanAlerts.Add($"!!!! НЕДОВІРЕНИЙ ПОВЕРНУВСЯ: {scanned.IpAddress}");
                         }
-                        else
-                        {
-                            LogAndNotify(EventType.DeviceConnected, $"Пристрій повернувся: {scanned.IpAddress} ({existing.Hostname})", existing.Id, true, fireEvent: false);
-                        }
+                        LogAndNotify(EventType.DeviceConnected, $"Пристрій повернувся: {scanned.IpAddress}", existing.Id, existing.IsTrusted, fireEvent: false);
                     }
 
                     existing.IsOnline = true;
                     existing.IpAddress = scanned.IpAddress;
                     existing.LastSeen = now;
 
-                    if (scanned.Hostname != "Unknown" && !scanned.Hostname.Contains("Device ("))
+                    if (scanned.Hostname != "Unknown" && !scanned.Hostname.Contains("Device"))
                     {
                         existing.Hostname = scanned.Hostname;
                     }
+                    else if (existing.Hostname.Contains("Unknown") && vendor != "Unknown")
+                    {
+                        existing.Hostname = $"{vendor} Device";
+                    }
+
                     _deviceRepo.Update(existing);
                 }
                 else
                 {
-                    // === НОВИЙ ПРИСТРІЙ ===
+                    // Новий пристрій
                     scanned.IsTrusted = false;
                     _deviceRepo.Add(scanned);
                     _deviceRepo.Save();
 
-                    string msg = $"!!!! НОВИЙ ПРИСТРІЙ: {scanned.IpAddress} ({vendor})";
-                    currentScanAlerts.Add(msg); // Додаємо в список тривог
-
-                    // Логуємо, але мовчимо поки що
-                    LogAndNotify(EventType.DeviceConnected, msg, scanned.Id, false, fireEvent: false);
+                    currentScanAlerts.Add($"!!!! НОВИЙ ПРИСТРІЙ: {scanned.IpAddress} ({vendor})");
+                    LogAndNotify(EventType.DeviceConnected, $"Новий пристрій: {scanned.IpAddress}", scanned.Id, false, fireEvent: false);
                 }
             }
 
-            // 3. ЗБЕРЕЖЕННЯ СЕСІЇ
+            // 3. Збереження сесії
             int avgPing = (devicesOnlineCount > 0) ? (int)(totalPingSum / devicesOnlineCount) : 0;
             _scanRepo.Add(new ScanSession { ScanTime = now, DevicesFound = devicesOnlineCount, AveragePingMs = avgPing });
             _scanRepo.Save();
             _deviceRepo.Save();
 
-            // 🔥 4. РОЗУМНЕ СПОВІЩЕННЯ (BATCHING)
+            // 4. Сповіщення
             if (currentScanAlerts.Count > 0)
             {
-                if (currentScanAlerts.Count == 1)
-                {
-                    // Якщо тільки один ворог — показуємо деталі
-                    OnSecurityAlert?.Invoke(currentScanAlerts[0]);
-                }
-                else
-                {
-                    // Якщо їх багато — показуємо одне загальне повідомлення
-                    string massAlert = $"⚠️ МАСОВА ТРИВОГА: Виявлено {currentScanAlerts.Count} нових недовірених пристроїв!";
-                    OnSecurityAlert?.Invoke(massAlert);
-
-                    // (Деталі вже записані в текстовий файл і базу даних через LogAndNotify)
-                }
+                if (currentScanAlerts.Count == 1) OnSecurityAlert?.Invoke(currentScanAlerts[0]);
+                else OnSecurityAlert?.Invoke($"⚠️ МАСОВА ТРИВОГА: {currentScanAlerts.Count} нових!");
             }
         }
 
-        // Оновлений метод з параметром fireEvent
         private void LogAndNotify(EventType type, string msg, int? deviceId, bool isTrusted, bool fireEvent = true)
         {
-            // 1. БД
             _eventRepo.Add(new NetworkEvent { Timestamp = DateTime.Now, Type = type, Message = msg, DeviceId = deviceId });
             _eventRepo.Save();
-
-            // 2. TXT
             FileLogger.Log(msg);
-
-            // 3. UI Подія (Тільки якщо дозволено параметром fireEvent)
-            if (fireEvent && type == EventType.DeviceConnected && !isTrusted)
-            {
-                OnSecurityAlert?.Invoke(msg);
-            }
+            if (fireEvent && type == EventType.DeviceConnected && !isTrusted) OnSecurityAlert?.Invoke(msg);
         }
 
         public void ClearAllHistory()

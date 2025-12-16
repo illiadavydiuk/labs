@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:DuckNet.UI.Converters"
-        Title="DuckNet Ultra" Height="850" Width="1200"
+        Title="DuckNet" Height="850" Width="1200"
         WindowStartupLocation="CenterScreen" FontFamily="Segoe UI"
         Background="{StaticResource BgColor}" Foreground="{StaticResource TextDark}">
 
