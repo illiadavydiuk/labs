@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Practice.Data/Practice.Data.csproj" Id="0662399f-2d36-4dbf-a2ed-465fc7420d09" />
+  <Project Path="Practice.Repositories/Practice.Repositories.csproj" Id="c6dbc826-cf8f-4c5c-90cd-f63fe80802bf" />
+  <Project Path="Practice.Services/Practice.Services.csproj" Id="6fbd1f7a-093b-4ad3-82e8-d67af874c6b3" />
+  <Project Path="Practice.UI/Practice.UI.csproj" Id="76883099-93e3-461b-8ed4-a14964d4a1bc" />
+</Solution>
