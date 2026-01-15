@@ -20,9 +20,13 @@ namespace Practice.Data.Entities
         [Required]
         public string password_hash { get; set; }
         [Required]
-        public string  first_name { get; set; }
+        public string first_name { get; set; }
         [Required]
         public string last_name { get; set; }
         public DateTime created_at { get; set; } = DateTime.UtcNow;
+
+        public virtual Student Student { get; set; }
+        public virtual Supervisor Supervisor { get; set; }
+        public virtual ICollection<AuditLog> AuditLogs { get; set; }
     }
 }

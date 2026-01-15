@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Practice.Data.Context;
 
@@ -10,9 +11,11 @@ using Practice.Data.Context;
 namespace Practice.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260115163823_IntershipAssignment")]
+    partial class IntershipAssignment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
@@ -30,36 +33,6 @@ namespace Practice.Data.Migrations
                     b.HasKey("status_id");
 
                     b.ToTable("AssignmentStatuses");
-                });
-
-            modelBuilder.Entity("Practice.Data.Entities.AuditLog", b =>
-                {
-                    b.Property<int>("log_id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("action")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("entity_affected")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("entity_id")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("timestamp")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("user_id")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("log_id");
-
-                    b.HasIndex("user_id");
-
-                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Department", b =>
@@ -186,49 +159,6 @@ namespace Practice.Data.Migrations
                     b.HasKey("position_id");
 
                     b.ToTable("Positions");
-                });
-
-            modelBuilder.Entity("Practice.Data.Entities.Report", b =>
-                {
-                    b.Property<int>("report_id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("assignment_id")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("report_file_url")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("review_date")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("status_id")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("student_comment")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("submission_date")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("supervisor_feedback")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("work_archive_url")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("report_id");
-
-                    b.HasIndex("assignment_id");
-
-                    b.HasIndex("status_id");
-
-                    b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.ReportStatus", b =>
@@ -396,17 +326,6 @@ namespace Practice.Data.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Practice.Data.Entities.AuditLog", b =>
-                {
-                    b.HasOne("Practice.Data.Entities.User", "User")
-                        .WithMany("AuditLogs")
-                        .HasForeignKey("user_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Practice.Data.Entities.IntershipAssignment", b =>
                 {
                     b.HasOne("Practice.Data.Entities.AssignmentStatus", "AssignmentStatus")
@@ -451,25 +370,6 @@ namespace Practice.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Organization");
-                });
-
-            modelBuilder.Entity("Practice.Data.Entities.Report", b =>
-                {
-                    b.HasOne("Practice.Data.Entities.IntershipAssignment", "IntershipAssignment")
-                        .WithMany("Reports")
-                        .HasForeignKey("assignment_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Practice.Data.Entities.ReportStatus", "ReportStatus")
-                        .WithMany()
-                        .HasForeignKey("status_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("IntershipAssignment");
-
-                    b.Navigation("ReportStatus");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Student", b =>
@@ -540,11 +440,6 @@ namespace Practice.Data.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("Practice.Data.Entities.IntershipAssignment", b =>
-                {
-                    b.Navigation("Reports");
-                });
-
             modelBuilder.Entity("Practice.Data.Entities.Role", b =>
                 {
                     b.Navigation("Users");
@@ -572,8 +467,6 @@ namespace Practice.Data.Migrations
 
             modelBuilder.Entity("Practice.Data.Entities.User", b =>
                 {
-                    b.Navigation("AuditLogs");
-
                     b.Navigation("Student")
                         .IsRequired();
 
