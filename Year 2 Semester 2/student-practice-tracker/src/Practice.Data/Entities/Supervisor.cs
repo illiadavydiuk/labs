@@ -9,21 +9,21 @@ namespace Practice.Data.Entities
     public class Supervisor
     {
         [Key]
-        public int supervisor_id { get; set; }
-        public int user_id { get; set; }
-        [ForeignKey("user_id")]
+        public int SupervisorId { get; set; }
+        public int UserId { get; set; }
+        [ForeignKey("UserId")]
         public virtual User User { get; set; }
 
-        public int department_id { get; set; }
-        [ForeignKey("department_id")]
+        public int? DepartmentId { get; set; }
+        [ForeignKey("DepartmentId")]
         public virtual Department Department { get; set; }
 
-        public int position_id { get; set; }
+        public int? PositionId { get; set; }
         [ForeignKey("position_id")]
         public virtual Position Position { get; set; }
 
-        public string phone { get; set; }
+        public string Phone { get; set; }
 
-        public virtual ICollection<IntershipAssignment> IntershipAssignments { get; set; }
+        public virtual ICollection<InternshipAssignment> IntershipAssignments { get; set; }
     }
 }

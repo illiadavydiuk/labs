@@ -9,21 +9,21 @@ namespace Practice.Data.Entities
     public class User
     {
         [Key]
-        public int user_id { get; set; }
+        public int UserId { get; set; }
 
-        public int role_id { get; set; }
-        [ForeignKey("role_id")]
+        public int RoleId { get; set; }
+        [ForeignKey("RoleId")]
         public virtual Role Role { get; set; }
 
         [Required, EmailAddress]
-        public string email { get; set; }
+        public string Email { get; set; }
         [Required]
-        public string password_hash { get; set; }
+        public string PasswordHash { get; set; }
         [Required]
-        public string first_name { get; set; }
+        public string FirstName { get; set; }
         [Required]
-        public string last_name { get; set; }
-        public DateTime created_at { get; set; } = DateTime.UtcNow;
+        public string LastName { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual Student Student { get; set; }
         public virtual Supervisor Supervisor { get; set; }

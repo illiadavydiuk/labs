@@ -8,11 +8,12 @@ namespace Practice.Data.Entities
     public class Specialty
     {
         [Key]
-        public int specialty_id { get; set; }
+        public int SpecialtyId { get; set; }
         [Required]
-        public string code { get; set; }
+        [MaxLength(20)]
+        public string Code { get; set; }
         [Required]
-        public string name { get; set; }
+        public string Name { get; set; }
 
         public virtual ICollection<StudentGroup> StudentGroups { get; set; }
     }

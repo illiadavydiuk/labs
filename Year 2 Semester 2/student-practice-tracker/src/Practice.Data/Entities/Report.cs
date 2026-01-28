@@ -9,18 +9,20 @@ namespace Practice.Data.Entities
     public class Report
     {
         [Key]
-        public int report_id { get; set; }
-        public int assignment_id { get; set; }
-        [ForeignKey("assignment_id")]
-        public virtual IntershipAssignment IntershipAssignment { get; set; }
-        public int status_id { get; set; }
-        [ForeignKey("status_id")]
+        public int ReportId { get; set; }
+        [Required]
+        public int AssignmentId { get; set; }
+        [ForeignKey("AssignmentId")]
+        public virtual InternshipAssignment IntershipAssignment { get; set; }
+        [Required]
+        public int StatusId { get; set; }
+        [ForeignKey("StatusId")]
         public virtual ReportStatus ReportStatus { get; set; }
-        public string report_file_url { get; set; }// text report
-        public string work_archive_url { get; set; } // file with all work
-        public string student_comment { get; set; }
-        public string supervisor_feedback { get; set; }
-        public DateTime submission_date { get; set; } = DateTime.UtcNow;
-        public DateTime? review_date { get; set; }
+        public string? StudentComment { get; set; }
+        public string SupervisorFeedback { get; set; }
+        public DateTime SubmissionDate { get; set; } = DateTime.UtcNow;
+        public DateTime? ReviewDate { get; set; }
+
+        public virtual ICollection<Attachment> Attachments { get; set; }
     }
 }

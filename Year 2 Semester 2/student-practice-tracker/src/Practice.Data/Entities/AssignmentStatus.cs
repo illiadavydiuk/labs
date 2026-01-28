@@ -8,7 +8,10 @@ namespace Practice.Data.Entities
     public class AssignmentStatus
     {
         [Key]
-        public int status_id { get; set;}
-        public string status_name { get; set; }
+        public int StatusId { get; set;}
+        [Required, MaxLength(50)]
+        public string StatusName { get; set; }
+
+        public virtual ICollection<InternshipAssignment> InternshipAssignments { get; set; }
     }
 }

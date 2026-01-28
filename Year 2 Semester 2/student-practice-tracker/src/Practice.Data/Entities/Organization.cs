@@ -8,10 +8,14 @@ namespace Practice.Data.Entities
     public class Organization
     {
         [Key]
-        public int organization_id { get; set; }
+        public int OrganizationId { get; set; }
         [Required, StringLength(100)]
-        public string name { get; set; }
-        public string address { get; set; }
-        public string contact_email { get; set; }
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public string Address { get; set; }
+        [MaxLength(100)]
+        public string ContactEmail { get; set; }
+
+        public virtual ICollection<InternshipTopic> InternshipTopics { get; set; }
     }
 }

@@ -9,13 +9,13 @@ namespace Practice.Data.Entities
     public class StudentGroup
     {
         [Key]
-        public int group_id { get; set; }
-        public int specialty_id { get; set; }
-        [ForeignKey("specialty_id")]
+        public int GroupId { get; set; }
+        public int SpecialtyId { get; set; }
+        [ForeignKey("SpecialtyId")]
         public virtual Specialty Specialty { get; set; }
-
-        public string group_code { get; set; }
-        public int entry_year { get; set; }
+        
+        public string GroupCode { get; set; }
+        public int EntryYear { get; set; }
 
         public virtual ICollection<Student> Students { get; set; }
     }

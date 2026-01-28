@@ -6,18 +6,15 @@ using System.Text;
 
 namespace Practice.Data.Entities
 {
-    public class Student
+    public class Course
     {
         [Key]
-        public int StudentId { get; set; }
-        public int UserId { get; set; }
-        [ForeignKey("UserId")]
-        public virtual User User { get; set; }
-        public int GroupId { get; set; }
-        [ForeignKey("GroupId")]
-        public virtual StudentGroup StudentGroup { get; set; }
-        [MaxLength(50)]
-        public string RecordBookNumber { get; set; }
+        public int CourseId { get; set; }
+        public int DisciplineId { get; set; }
+        [ForeignKey("DisciplineId")]
+        public virtual Discipline Discipline { get; set; }
+        public string Name { get; set; }
+        public bool IsActive { get; set; } = true;
 
         public virtual ICollection<InternshipAssignment> IntershipAssignments { get; set; }
         public virtual ICollection<CourseEnrollment> CourseEnrollments { get; set; }

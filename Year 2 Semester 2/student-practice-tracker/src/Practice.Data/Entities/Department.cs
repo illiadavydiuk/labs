@@ -8,8 +8,11 @@ namespace Practice.Data.Entities
     public class Department
     {
         [Key]
-        public int department_id { get; set; }
+        public int DepartmentId { get; set; }
         [Required]
-        public string department_name { get; set; }
+        [MaxLength(200)]
+        public string DepartmentName { get; set; }
+
+        public virtual ICollection<Supervisor> Supervisors { get; set; }
     }
 }

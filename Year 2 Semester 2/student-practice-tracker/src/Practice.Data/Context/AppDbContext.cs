@@ -18,12 +18,16 @@ namespace Practice.Data.Context
         public DbSet<Position> Positions => Set<Position>();
         public DbSet<Supervisor> Supervisors => Set<Supervisor>();
         public DbSet<Organization> Organizations => Set<Organization>();
-        public DbSet<IntershipTopic> IntershipTopics => Set<IntershipTopic>();
+        public DbSet<InternshipTopic> IntershipTopics => Set<InternshipTopic>();
         public DbSet<AssignmentStatus> AssignmentStatuses => Set<AssignmentStatus>();
         public DbSet<ReportStatus> ReportStatuses => Set<ReportStatus>();
-        public DbSet<IntershipAssignment> IntershipAssignments => Set<IntershipAssignment>();
+        public DbSet<InternshipAssignment> IntershipAssignments => Set<InternshipAssignment>();
         public DbSet<Report> Reports => Set<Report>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
+        public DbSet<Course> Courses => Set<Course>();
+        public DbSet<Discipline> Disciplines => Set<Discipline>();
+        public DbSet<Attachment> Attachments => Set<Attachment>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

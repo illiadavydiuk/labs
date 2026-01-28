@@ -9,14 +9,14 @@ namespace Practice.Data.Entities
     public class AuditLog
     {
         [Key]
-        public int log_id { get; set; }
-        public int user_id { get; set; }
-        [ForeignKey("user_id")]
+        public int LogId { get; set; }
+        public int UserId { get; set; }
+        [ForeignKey("UserId")]
         public virtual User User { get; set; }
 
-        public string action { get; set; }
-        public string entity_affected { get; set; }
-        public int entity_id { get; set; }
-        public DateTime timestamp { get; set; } = DateTime.UtcNow;
+        public string Action { get; set; }
+        public string EntityAffected { get; set; }
+        public int EntityId { get; set; }
+        public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
     }
 }

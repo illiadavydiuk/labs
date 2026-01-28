@@ -5,12 +5,14 @@ using System.Text;
 
 namespace Practice.Data.Entities
 {
-    public class Position
+    public class Discipline
     {
         [Key]
-        public int PositionId { get; set; }
+        public int DisciplineIid { get; set; }
         [Required]
         [MaxLength(150)]
-        public string PositionName { get; set; }
+        public string DisciplineName { get; set; }
+
+        public virtual ICollection<Course> Courses { get; set; } 
     }
 }
