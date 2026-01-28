@@ -13,7 +13,7 @@ namespace Practice.Data.Entities
         [Required]
         public int AssignmentId { get; set; }
         [ForeignKey("AssignmentId")]
-        public virtual InternshipAssignment IntershipAssignment { get; set; }
+        public virtual InternshipAssignment InternshipAssignment { get; set; }
         [Required]
         public int StatusId { get; set; }
         [ForeignKey("StatusId")]

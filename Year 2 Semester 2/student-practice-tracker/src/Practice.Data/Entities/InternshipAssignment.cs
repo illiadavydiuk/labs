@@ -17,7 +17,7 @@ namespace Practice.Data.Entities
         [Required]
         public int TopicId { get; set; }
         [ForeignKey("TopicId")]
-        public virtual InternshipTopic IntershipTopic { get; set; }
+        public virtual InternshipTopic InternshipTopic { get; set; }
         public int? SupervisorId { get; set; }
         [ForeignKey("SupervisorId")]
         public virtual Supervisor Supervisor { get; set; }

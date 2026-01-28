@@ -10,7 +10,7 @@ namespace Practice.Data.Entities
     {
         [Key]
         public int LogId { get; set; }
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
         [ForeignKey("UserId")]
         public virtual User User { get; set; }
 

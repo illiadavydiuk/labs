@@ -19,11 +19,11 @@ namespace Practice.Data.Entities
         public virtual Department Department { get; set; }
 
         public int? PositionId { get; set; }
-        [ForeignKey("position_id")]
+        [ForeignKey("PositionId")]
         public virtual Position Position { get; set; }
 
         public string Phone { get; set; }
 
-        public virtual ICollection<InternshipAssignment> IntershipAssignments { get; set; }
+        public virtual ICollection<InternshipAssignment> InternshipAssignments { get; set; }
     }
 }

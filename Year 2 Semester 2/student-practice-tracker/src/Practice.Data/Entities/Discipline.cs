@@ -8,7 +8,7 @@ namespace Practice.Data.Entities
     public class Discipline
     {
         [Key]
-        public int DisciplineIid { get; set; }
+        public int DisciplineId { get; set; }
         [Required]
         [MaxLength(150)]
         public string DisciplineName { get; set; }

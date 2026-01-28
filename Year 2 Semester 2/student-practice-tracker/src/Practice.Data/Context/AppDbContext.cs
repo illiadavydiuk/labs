@@ -58,5 +58,58 @@ namespace Practice.Data.Context
 
             base.OnConfiguring(optionsBuilder);
         }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Attachment>()
+                .HasOne(a => a.Report)
+                .WithMany(r => r.Attachments)
+                .HasForeignKey(a => a.ReportId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Report>()
+                .HasOne(r => r.InternshipAssignment)
+                .WithMany(a => a.Reports)
+                .HasForeignKey(r => r.AssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CourseEnrollment>()
+                .HasOne(ce => ce.Course)
+                .WithMany(c => c.CourseEnrollments)
+                .HasForeignKey(ce => ce.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Обмеження
+            modelBuilder.Entity<InternshipAssignment>()
+                .HasOne(a => a.InternshipTopic)
+                .WithMany(t => t.InternshipAssignments)
+                .HasForeignKey(a => a.TopicId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InternshipAssignment>()
+                .HasOne(a => a.Student)
+                .WithMany(s => s.InternshipAssignments)
+                .HasForeignKey(a => a.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Course>()
+                .HasOne(c => c.Discipline)
+                .WithMany(d => d.Courses)
+                .HasForeignKey(c => c.DisciplineId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InternshipTopic>()
+                .HasOne(t => t.Organization)
+                .WithMany(o => o.InternshipTopics)
+                .HasForeignKey(t => t.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AuditLog>()
+                .HasOne(l => l.User)
+                .WithMany(u => u.AuditLogs)
+                .HasForeignKey(l => l.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        }
     }
 }
