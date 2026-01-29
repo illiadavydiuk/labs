@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IReportRepository : IRepository<Report>
     {
+        Task<IEnumerable<Report>> GetByAssignmentIdAsync(int assignmentId);
     }
 }

@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface ISpecialtyRepository : IRepository<Specialty>
     {
+        Task<Specialty> GetByCodeAsync(string code);
     }
 }

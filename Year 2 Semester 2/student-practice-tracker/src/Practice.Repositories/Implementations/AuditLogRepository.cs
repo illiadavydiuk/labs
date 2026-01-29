@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -11,6 +12,13 @@ namespace Practice.Repositories.Implementations
     {
         public AuditLogRepository(AppDbContext context) : base(context)
         {
+        }
+        public async Task<IEnumerable<AuditLog>> GetByUserIdAsync(int userId)
+        {
+            return await _dbSet
+                .Where(l => l.UserId == userId)
+                .OrderByDescending(l => l.TimeStamp)
+                .ToListAsync();
         }
     }
 }

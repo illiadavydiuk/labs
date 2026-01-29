@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IOrganizationRepository : IRepository<Organization>
     {
+        Task<IEnumerable<Organization>> GetByTypeAsync(string type);
     }
 }

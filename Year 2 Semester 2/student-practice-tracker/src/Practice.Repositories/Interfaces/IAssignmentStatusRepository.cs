@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IAssignmentStatusRepository : IRepository<AssignmentStatus>
     {
+        Task<AssignmentStatus> GetByNameAsync(string statusName);
     }
 }

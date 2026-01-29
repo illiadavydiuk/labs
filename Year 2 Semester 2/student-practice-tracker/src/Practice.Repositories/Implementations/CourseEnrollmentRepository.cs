@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -11,6 +12,14 @@ namespace Practice.Repositories.Implementations
     {
         public CourseEnrollmentRepository(AppDbContext context) : base(context)
         {
+        }
+        public async Task<IEnumerable<CourseEnrollment>> GetByCourseIdAsync(int courseId)
+        {
+            return await _dbSet
+                .Where(e => e.CourseId == courseId)
+                .Include(e => e.Student).ThenInclude(s => s.User)
+                .Include(e => e.StudentGroup)
+                .ToListAsync();
         }
     }
 }

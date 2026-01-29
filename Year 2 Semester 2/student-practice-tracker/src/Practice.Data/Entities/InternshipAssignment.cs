@@ -13,6 +13,9 @@ namespace Practice.Data.Entities
         [Required]
         public int StudentId { get; set; }
         [ForeignKey("StudentId")]
+        public int CourseId { get; set; }
+        [ForeignKey("CourseId")]
+        public virtual Course Course { get; set; }
         public virtual Student Student { get; set; }
         [Required]
         public int TopicId { get; set; }

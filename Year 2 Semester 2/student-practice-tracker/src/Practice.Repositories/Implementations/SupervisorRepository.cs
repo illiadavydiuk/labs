@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -11,6 +12,14 @@ namespace Practice.Repositories.Implementations
     {
         public SupervisorRepository(AppDbContext context) : base(context)
         {
+        }
+        public async Task<Supervisor> GetSupervisorDetailsAsync(int supervisorId)
+        {
+            return await _dbSet
+                .Include(sup => sup.User)
+                .Include(sup => sup.Department) 
+                .Include(sup => sup.Position)   
+                .FirstOrDefaultAsync(sup => sup.SupervisorId == supervisorId);
         }
     }
 }

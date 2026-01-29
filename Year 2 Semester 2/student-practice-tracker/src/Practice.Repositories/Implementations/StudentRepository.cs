@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -11,6 +12,13 @@ namespace Practice.Repositories.Implementations
     {
         public StudentRepository(AppDbContext context) : base(context)
         {
+        }
+        public async Task<Student> GetStudentDetailsAsync(int studentId)
+        {
+            return await _dbSet
+                .Include(s => s.User)        // ПІБ та Email
+                .Include(s => s.StudentGroup) // Шифр групи
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
         }
     }
 }

@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IReportStatusRepository : IRepository<ReportStatus>
     {
+        Task<ReportStatus> GetByNameAsync(string name);
     }
 }

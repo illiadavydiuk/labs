@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IAttachmentRepository : IRepository<Attachment>
     {
+        Task<IEnumerable<Attachment>> GetByReportIdAsync(int reportId);
     }
 }

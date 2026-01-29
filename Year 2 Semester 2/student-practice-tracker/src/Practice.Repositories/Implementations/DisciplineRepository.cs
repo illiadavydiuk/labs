@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -11,6 +12,11 @@ namespace Practice.Repositories.Implementations
     {
         public DisciplineRepository(AppDbContext context) : base(context)
         {
+        }
+        public async Task<Discipline> GetByNameAsync(string disciplineName)
+        {
+            return await _dbSet
+                .FirstOrDefaultAsync(d => d.DisciplineName == disciplineName);
         }
     }
 }

@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IAuditLogRepository : IRepository<AuditLog>
     {
+        Task<IEnumerable<AuditLog>> GetByUserIdAsync(int userId);
     }
 }

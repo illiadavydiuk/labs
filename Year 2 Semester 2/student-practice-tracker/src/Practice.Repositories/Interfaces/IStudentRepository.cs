@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IStudentRepository : IRepository<Student>
     {
+        Task<Student> GetStudentDetailsAsync(int studentId);
     }
 }

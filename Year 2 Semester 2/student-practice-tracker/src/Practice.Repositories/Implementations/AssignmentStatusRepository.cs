@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -12,5 +13,9 @@ namespace Practice.Repositories.Implementations
         public AssignmentStatusRepository(AppDbContext context) : base(context)
         {
         }
+        public async Task<AssignmentStatus> GetByNameAsync(string statusName)
+        {
+            return await _dbSet.FirstOrDefaultAsync(s => s.StatusName == statusName);
+    }
     }
 }

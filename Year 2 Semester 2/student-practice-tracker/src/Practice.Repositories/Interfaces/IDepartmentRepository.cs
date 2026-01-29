@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IDepartmentRepository : IRepository<Department>
     {
+        Task<Department> GetByNameAsync(string departmentName);
     }
 }

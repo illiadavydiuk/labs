@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface ISupervisorRepository : IRepository<Supervisor>
     {
+        Task<Supervisor> GetSupervisorDetailsAsync(int supervisorId);
     }
 }

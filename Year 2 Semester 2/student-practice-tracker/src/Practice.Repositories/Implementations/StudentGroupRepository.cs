@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -11,6 +12,13 @@ namespace Practice.Repositories.Implementations
     {
         public StudentGroupRepository(AppDbContext context) : base(context)
         {
+        }
+        public async Task<IEnumerable<StudentGroup>> GetGroupsBySpecialtyAsync(int specialtyId)
+        {
+            return await _dbSet
+                .Where(g => g.SpecialtyId == specialtyId)
+                .Include(g => g.Specialty)
+                .ToListAsync();
         }
     }
 }

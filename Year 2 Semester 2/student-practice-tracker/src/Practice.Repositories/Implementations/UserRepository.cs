@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -11,6 +12,12 @@ namespace Practice.Repositories.Implementations
     {
         public UserRepository(AppDbContext context) : base(context)
         {
+        }
+        public async Task<User> GetByEmailAsync(string email)
+        {
+            return await _dbSet
+                .Include(u => u.Role) // Роль для перевірки прав
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
     }
 }

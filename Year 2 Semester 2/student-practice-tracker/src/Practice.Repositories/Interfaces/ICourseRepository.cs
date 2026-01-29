@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface ICourseRepository : IRepository<Course>
     {
+        Task<IEnumerable<Course>> GetActiveCoursesAsync();
     }
 }

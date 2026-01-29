@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -11,6 +12,20 @@ namespace Practice.Repositories.Implementations
     {
         public InternshipTopicRepository(AppDbContext context) : base(context)
         {
+        }
+        public async Task<IEnumerable<InternshipTopic>> GetAvailableTopicsAsync()
+        {
+            return await _dbSet
+                .Where(t => t.IsAvailable)
+                .Include(t => t.Organization)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<InternshipTopic>> GetByOrganizationAsync(int organizationId)
+        {
+            return await _dbSet
+                .Where(t => t.OrganizationId == organizationId)
+                .ToListAsync();
         }
     }
 }

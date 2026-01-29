@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IDisciplineRepository : IRepository<Discipline>
     {
+        Task<Discipline> GetByNameAsync(string disciplineName);
     }
 }

@@ -7,5 +7,6 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IStudentGroupRepository : IRepository<StudentGroup>
     {
+        Task<IEnumerable<StudentGroup>> GetGroupsBySpecialtyAsync(int specialtyId);
     }
 }

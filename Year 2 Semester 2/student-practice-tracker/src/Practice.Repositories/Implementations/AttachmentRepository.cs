@@ -1,4 +1,5 @@
-﻿using Practice.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
 using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using System;
@@ -11,6 +12,13 @@ namespace Practice.Repositories.Implementations
     {
         public AttachmentRepository(AppDbContext context) : base(context)
         {
+        }
+        public async Task<IEnumerable<Attachment>> GetByReportIdAsync(int reportId)
+        {
+            return await _dbSet
+                .Where(a => a.ReportId == reportId)
+                .OrderByDescending(a => a.UploadedAt)
+                .ToListAsync();
         }
     }
 }
