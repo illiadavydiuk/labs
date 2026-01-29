@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Practice.Data.Entities;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Practice.Repositories.Interfaces
 {
-    internal class IInternshipTopicRepository
+    public interface IInternshipTopicRepository : IRepository<InternshipTopic>
     {
     }
 }
