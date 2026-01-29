@@ -18,10 +18,10 @@ namespace Practice.Data.Context
         public DbSet<Position> Positions => Set<Position>();
         public DbSet<Supervisor> Supervisors => Set<Supervisor>();
         public DbSet<Organization> Organizations => Set<Organization>();
-        public DbSet<InternshipTopic> IntershipTopics => Set<InternshipTopic>();
+        public DbSet<InternshipTopic> InternshipTopics => Set<InternshipTopic>();
         public DbSet<AssignmentStatus> AssignmentStatuses => Set<AssignmentStatus>();
         public DbSet<ReportStatus> ReportStatuses => Set<ReportStatus>();
-        public DbSet<InternshipAssignment> IntershipAssignments => Set<InternshipAssignment>();
+        public DbSet<InternshipAssignment> InternshipAssignments => Set<InternshipAssignment>();
         public DbSet<Report> Reports => Set<Report>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
         public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();

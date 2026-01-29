@@ -4,7 +4,8 @@ using System.Text;
 
 namespace Practice.Services.Interfaces
 {
-    internal class IAuditService
+    public interface IAuditService
     {
+        Task LogActionAsync(int? userId, string action, string details, string entityName, int entityId);
     }
 }

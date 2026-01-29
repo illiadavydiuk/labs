@@ -22,7 +22,7 @@ namespace Practice.Data.Entities
         [ForeignKey("PositionId")]
         public virtual Position Position { get; set; }
 
-        public string Phone { get; set; }
+        public string? Phone { get; set; }
 
         public virtual ICollection<InternshipAssignment> InternshipAssignments { get; set; }
     }

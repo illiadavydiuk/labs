@@ -14,7 +14,8 @@ namespace Practice.Data.Entities
         [ForeignKey("UserId")]
         public virtual User User { get; set; }
 
-        public string Action { get; set; }
+        public string Action { get; set; } = string.Empty;
+        public string Details { get; set; } = string.Empty;
         public string EntityAffected { get; set; }
         public int EntityId { get; set; }
         public DateTime TimeStamp { get; set; } = DateTime.UtcNow;

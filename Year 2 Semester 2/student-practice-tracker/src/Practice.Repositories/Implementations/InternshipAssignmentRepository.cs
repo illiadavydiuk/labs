@@ -32,5 +32,15 @@ namespace Practice.Repositories.Implementations
                 .Include(a => a.AssignmentStatus)
                 .ToListAsync();
         }
+        public async Task<InternshipAssignment?> GetActiveAssignmentAsync(int studentId)
+        {
+            return await _dbSet
+                .Where(a => a.StudentId == studentId) 
+                .Include(a => a.InternshipTopic)     
+                .Include(a => a.AssignmentStatus) 
+                .Include(a => a.Supervisor).ThenInclude(s => s.User)
+                .OrderByDescending(a => a.StartDate)
+                .FirstOrDefaultAsync();
+        }
     }
 }

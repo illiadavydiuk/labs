@@ -16,7 +16,7 @@ namespace Practice.Data.Entities
 
         [Required, StringLength(1000)]
         public string Title { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public bool IsAvailable { get; set; }
 
         public virtual ICollection<InternshipAssignment> InternshipAssignments { get; set; }

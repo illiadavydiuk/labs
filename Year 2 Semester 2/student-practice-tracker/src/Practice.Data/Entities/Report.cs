@@ -19,7 +19,7 @@ namespace Practice.Data.Entities
         [ForeignKey("StatusId")]
         public virtual ReportStatus ReportStatus { get; set; }
         public string? StudentComment { get; set; }
-        public string SupervisorFeedback { get; set; }
+        public string? SupervisorFeedback { get; set; }
         public DateTime SubmissionDate { get; set; } = DateTime.UtcNow;
         public DateTime? ReviewDate { get; set; }
 
