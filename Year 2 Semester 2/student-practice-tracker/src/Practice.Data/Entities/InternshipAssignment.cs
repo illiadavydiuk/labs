@@ -31,6 +31,8 @@ namespace Practice.Data.Entities
         public string? IndividualTask { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public int? CompanyGrade { get; set; }
+        public string? CompanyFeedback { get; set; }
         public int? FinalGrade { get; set; }
 
         public virtual ICollection<Report> Reports { get; set; }
