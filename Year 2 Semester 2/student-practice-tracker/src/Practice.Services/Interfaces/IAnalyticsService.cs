@@ -4,7 +4,9 @@ using System.Text;
 
 namespace Practice.Services.Interfaces
 {
-    internal class IAnalyticsService
+    public interface IAnalyticsService
     {
+        Task<string> GenerateSimpleReportAsync();
+        void ExportDatabase(string destinationPath);
     }
 }
