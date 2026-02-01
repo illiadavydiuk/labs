@@ -24,6 +24,7 @@ namespace Practice.Data.Entities
         [Required]
         public string LastName { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsPasswordChangeRequired { get; set; } = false;
 
         public virtual Student Student { get; set; }
         public virtual Supervisor Supervisor { get; set; }

@@ -14,5 +14,6 @@ namespace Practice.Data.Entities
         public string DepartmentName { get; set; }
 
         public virtual ICollection<Supervisor> Supervisors { get; set; }
+        public virtual ICollection<Specialty> Specialties { get; set; }
     }
 }

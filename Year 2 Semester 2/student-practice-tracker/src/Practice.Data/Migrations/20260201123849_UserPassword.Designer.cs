@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Practice.Data.Context;
 
@@ -10,9 +11,11 @@ using Practice.Data.Context;
 namespace Practice.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260201123849_UserPassword")]
+    partial class UserPassword
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
@@ -383,16 +386,11 @@ namespace Practice.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("SpecialtyId");
-
-                    b.HasIndex("DepartmentId");
 
                     b.ToTable("Specialties");
                 });
@@ -640,17 +638,6 @@ namespace Practice.Data.Migrations
                     b.Navigation("ReportStatus");
                 });
 
-            modelBuilder.Entity("Practice.Data.Entities.Specialty", b =>
-                {
-                    b.HasOne("Practice.Data.Entities.Department", "Department")
-                        .WithMany("Specialties")
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Department");
-                });
-
             modelBuilder.Entity("Practice.Data.Entities.Student", b =>
                 {
                     b.HasOne("Practice.Data.Entities.StudentGroup", "StudentGroup")
@@ -729,8 +716,6 @@ namespace Practice.Data.Migrations
 
             modelBuilder.Entity("Practice.Data.Entities.Department", b =>
                 {
-                    b.Navigation("Specialties");
-
                     b.Navigation("Supervisors");
                 });
 

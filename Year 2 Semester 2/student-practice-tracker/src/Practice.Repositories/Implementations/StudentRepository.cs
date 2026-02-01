@@ -20,5 +20,12 @@ namespace Practice.Repositories.Implementations
                 .Include(s => s.StudentGroup) // Шифр групи
                 .FirstOrDefaultAsync(s => s.StudentId == studentId);
         }
+        public async Task<Student> GetByUserIdAsync(int userId)
+        {
+            return await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.StudentGroup) // Підтягуємо групу
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+        }
     }
 }
