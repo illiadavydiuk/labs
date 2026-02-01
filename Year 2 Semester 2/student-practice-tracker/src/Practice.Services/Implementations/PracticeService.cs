@@ -1,4 +1,6 @@
-﻿using Practice.Data.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
+using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using Practice.Services.Interfaces;
 using System;
@@ -14,7 +16,7 @@ namespace Practice.Services.Implementations
         private readonly IInternshipTopicRepository _topicRepo;
         private readonly IInternshipAssignmentRepository _assignmentRepo;
         private readonly IAssignmentStatusRepository _statusRepo;
-        private readonly IOrganizationRepository _orgRepo; 
+        private readonly IOrganizationRepository _orgRepo;
         private readonly IAuditService _auditService;
 
         public PracticeService(
@@ -39,16 +41,45 @@ namespace Practice.Services.Implementations
         public async Task<bool> AddTopicAsync(InternshipTopic topic)
         {
             if (string.IsNullOrWhiteSpace(topic.Title)) throw new ArgumentException("Назва теми обов'язкова");
-
             topic.IsAvailable = true;
             _topicRepo.Add(topic);
             await _topicRepo.SaveAsync();
+            await _auditService.LogActionAsync(null, "Create", $"Створено тему: {topic.Title}", "InternshipTopic", topic.TopicId);
             return true;
+        }
+
+        public async Task UpdateTopicAsync(InternshipTopic topic)
+        {
+            using var context = new AppDbContext();
+            var existing = await context.InternshipTopics.FindAsync(topic.TopicId);
+            if (existing != null)
+            {
+                existing.Title = topic.Title;
+                existing.Description = topic.Description;
+                existing.OrganizationId = topic.OrganizationId;
+                existing.DisciplineId = topic.DisciplineId;
+
+                context.InternshipTopics.Update(existing);
+                await context.SaveChangesAsync();
+                await _auditService.LogActionAsync(null, "Update", $"Оновлено тему: {topic.Title}", "InternshipTopic", topic.TopicId);
+            }
+        }
+
+        public async Task DeleteTopicAsync(int topicId)
+        {
+            using var context = new AppDbContext();
+            var item = await context.InternshipTopics.FindAsync(topicId);
+            if (item != null)
+            {
+                string title = item.Title;
+                context.InternshipTopics.Remove(item);
+                await context.SaveChangesAsync();
+                await _auditService.LogActionAsync(null, "Delete", $"Видалено тему: {title}", "InternshipTopic", topicId);
+            }
         }
 
         public async Task<bool> AssignTopicAsync(int studentId, int topicId, int courseId, int supervisorId, string individualTask)
         {
-            // Спроба знайти статус 'Assigned', якщо ні - беремо перший
             var status = await _statusRepo.GetByNameAsync("Assigned") ?? await _statusRepo.GetByIdAsync(1);
 
             var assignment = new InternshipAssignment
@@ -72,7 +103,7 @@ namespace Practice.Services.Implementations
             _assignmentRepo.Add(assignment);
             await _assignmentRepo.SaveAsync();
             await _topicRepo.SaveAsync();
-            await _auditService.LogActionAsync(null, "Assign", "Призначення теми практики", "InternshipAssignment", assignment.AssignmentId);
+            await _auditService.LogActionAsync(null, "Assign", $"Студент {studentId} обрав тему {topicId}", "InternshipAssignment", assignment.AssignmentId);
             return true;
         }
 
@@ -89,7 +120,6 @@ namespace Practice.Services.Implementations
         public async Task<Organization> CreateOrganizationAsync(string name, string address, string type)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Назва організації обов'язкова");
-
             var org = new Organization
             {
                 Name = name,
@@ -99,6 +129,7 @@ namespace Practice.Services.Implementations
             };
             _orgRepo.Add(org);
             await _orgRepo.SaveAsync();
+            await _auditService.LogActionAsync(null, "Create", $"Створено організацію: {name}", "Organization", org.OrganizationId);
             return org;
         }
 
@@ -108,17 +139,25 @@ namespace Practice.Services.Implementations
             string dbPath = "";
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
                 dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), folderName, "practice_platform.db");
-            }
             else
-            {
                 dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share", folderName, "practice_platform.db");
-            }
 
             if (File.Exists(dbPath))
             {
                 File.Copy(dbPath, destinationPath, true);
+            }
+        }
+        public async Task DeleteOrganizationAsync(int id)
+        {
+            using var context = new AppDbContext();
+            var item = await context.Organizations.FindAsync(id);
+            if (item != null)
+            {
+                string name = item.Name;
+                context.Organizations.Remove(item);
+                await context.SaveChangesAsync();
+                await _auditService.LogActionAsync(null, "Delete", $"Видалено організацію: {name}", "Organization", id);
             }
         }
     }

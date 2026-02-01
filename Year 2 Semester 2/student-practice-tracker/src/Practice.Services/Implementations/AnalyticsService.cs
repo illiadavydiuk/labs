@@ -15,7 +15,7 @@ public class AnalyticsService : IAnalyticsService
     {
         var assignments = await _assignmentRepo.GetAllAsync();
         var sb = new StringBuilder();
-        sb.AppendLine("Прізвище студента;Оцінка;Статус"); // Формат CSV
+        sb.AppendLine("Прізвище студента;Оцінка;Статус"); 
 
         foreach (var a in assignments)
         {

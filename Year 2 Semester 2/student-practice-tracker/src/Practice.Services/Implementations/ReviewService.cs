@@ -1,71 +1,63 @@
-﻿using Practice.Data.Entities;
-using Practice.Repositories.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using Practice.Data.Context;
+using Practice.Data.Entities;
 using Practice.Services.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Practice.Services.Implementations
 {
     public class ReviewService : IReviewService
     {
-        private readonly IReportRepository _reportRepo;
-        private readonly IAttachmentRepository _attachmentRepo;
-        private readonly IAuditService _auditService;
+        private readonly AppDbContext _context;
 
-        public ReviewService(IReportRepository reportRepo, IAttachmentRepository attachmentRepo, IAuditService auditService)
+        public ReviewService(AppDbContext context)
         {
-            _reportRepo = reportRepo;
-            _attachmentRepo = attachmentRepo;
-            _auditService = auditService;
+            _context = context;
         }
 
-        public async Task<bool> SubmitReportAsync(int assignmentId, string? comment, List<Attachment> files)
+        public async Task ReviewReportAsync(int reportId, int supervisorId, int statusId, string feedback, int? grade)
         {
-            var report = new Report
-            {
-                AssignmentId = assignmentId, 
-                StudentComment = comment, 
-                StatusId = 1, 
-                SubmissionDate = DateTime.UtcNow
-            };
+            using var context = new AppDbContext();
 
-            _reportRepo.Add(report);
-            await _reportRepo.SaveAsync(); 
+            var report = await context.Reports
+                .Include(r => r.InternshipAssignment) 
+                .FirstOrDefaultAsync(r => r.ReportId == reportId);
 
-            foreach (var file in files)
-            {
-                file.ReportId = report.ReportId;
-
-                if (string.IsNullOrEmpty(file.FileType)) file.FileType = "binary";
-
-                _attachmentRepo.Add(file);
-            }
-
-            await _attachmentRepo.SaveAsync();
-
-            await _auditService.LogActionAsync(null, "SubmitReport", "Подача звіту", "Report", report.ReportId);
-            return true;
-        }
-
-        public async Task<bool> ReviewReportAsync(int reportId, int statusId, string feedback)
-        {
-            var report = await _reportRepo.GetByIdAsync(reportId);
-            if (report == null) return false;
+            if (report == null) throw new Exception("Звіт не знайдено");
 
             report.StatusId = statusId;
-            report.SupervisorFeedback = feedback; 
-            report.ReviewDate = DateTime.UtcNow;   
+            report.SupervisorFeedback = feedback;
 
-            _reportRepo.Update(report);
-            await _reportRepo.SaveAsync();
-            await _auditService.LogActionAsync(null, "Review", $"Оцінка/статус: {statusId}", "Report", reportId);
-            return true;
-        }
+            if (grade.HasValue)
+            {
+                report.InternshipAssignment.FinalGrade = grade.Value;
+            }
 
-        public async Task<IEnumerable<Report>> GetReportsHistoryAsync(int assignmentId)
-        {
-            return await _reportRepo.GetByAssignmentIdAsync(assignmentId);
+            if (statusId == 3)
+            {
+                report.InternshipAssignment.StatusId = 3;
+            }
+
+            await context.SaveChangesAsync();
+
+            // Логування
+            string action = statusId == 3 ? "Report Accepted" : "Report Returned";
+            string msg = statusId == 3
+                ? $"Викладач прийняв звіт. Оцінка: {grade}"
+                : $"Викладач повернув звіт. Зауваження: {feedback}";
+
+            var log = new AuditLog
+            {
+                UserId = supervisorId,
+                Action = action,
+                Details = msg,
+                EntityName = "Assignment",
+                EntityId = report.AssignmentId,
+                TimeStamp = DateTime.UtcNow
+            };
+            context.AuditLogs.Add(log);
+            await context.SaveChangesAsync();
         }
     }
 }

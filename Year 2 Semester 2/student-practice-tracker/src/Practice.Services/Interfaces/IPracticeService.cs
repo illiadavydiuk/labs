@@ -8,14 +8,17 @@ namespace Practice.Services.Interfaces
     {
         Task<IEnumerable<InternshipTopic>> GetAvailableTopicsAsync();
         Task<bool> AddTopicAsync(InternshipTopic topic);
-        Task<bool> AssignTopicAsync(int studentId, int topicId, int courseId, int supervisorId, string individualTask);
+
+        Task UpdateTopicAsync(InternshipTopic topic);
+        Task DeleteTopicAsync(int topicId);
+
+        Task<bool> AssignTopicAsync(int studentId, int topicId, int courseId, int supervisorId, string task);
         Task<InternshipAssignment?> GetStudentAssignmentAsync(int studentId);
 
-        // Методи для Організацій
         Task<IEnumerable<Organization>> GetAllOrganizationsAsync();
         Task<Organization> CreateOrganizationAsync(string name, string address, string type);
+        Task DeleteOrganizationAsync(int id); 
 
-        // Бекап
-        void CreateBackup(string destinationPath);
+        void CreateBackup(string path);
     }
 }

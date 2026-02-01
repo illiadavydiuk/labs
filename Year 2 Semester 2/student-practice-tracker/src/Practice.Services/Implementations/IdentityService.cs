@@ -12,8 +12,8 @@ namespace Practice.Services.Implementations
         private readonly IUserRepository _userRepo;
         private readonly IStudentRepository _studentRepo;
         private readonly ISupervisorRepository _supervisorRepo;
-        private readonly IStudentGroupRepository _groupRepo;       // Додано
-        private readonly IDepartmentRepository _departmentRepo;     // Додано
+        private readonly IStudentGroupRepository _groupRepo;
+        private readonly IDepartmentRepository _departmentRepo;
         private readonly IAuditService _auditService;
 
         public IdentityService(
@@ -37,7 +37,7 @@ namespace Practice.Services.Implementations
             var user = await _userRepo.GetByEmailAsync(email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
-                await _auditService.LogActionAsync(null, "Auth_Failed", $"Спроба для: {email}", "User", 0);
+                await _auditService.LogActionAsync(null, "Auth_Failed", $"Невдала спроба входу: {email}", "User", 0);
                 return null;
             }
             await _auditService.LogActionAsync(user.UserId, "Auth", "Успішний вхід", "User", user.UserId);
@@ -46,18 +46,13 @@ namespace Practice.Services.Implementations
 
         public async Task<bool> RegisterStudentAsync(User user, string password, int groupId, string recordBook)
         {
-            // Валідація
-            if (string.IsNullOrWhiteSpace(user.Email) || !user.Email.Contains("@"))
-                throw new ArgumentException("Некоректний Email");
-            if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.LastName))
-                throw new ArgumentException("Ім'я та прізвище обов'язкові");
-            if (password.Length < 4)
-                throw new ArgumentException("Пароль занадто короткий");
+            if (string.IsNullOrWhiteSpace(user.Email) || !user.Email.Contains("@")) throw new ArgumentException("Некоректний Email");
+            if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.LastName)) throw new ArgumentException("Ім'я та прізвище обов'язкові");
+            if (password.Length < 4) throw new ArgumentException("Пароль занадто короткий");
 
             var group = await _groupRepo.GetByIdAsync(groupId);
             if (group == null) throw new ArgumentException("Обрана група не існує");
 
-            // Створення
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
             _userRepo.Add(user);
             await _userRepo.SaveAsync();
@@ -71,19 +66,13 @@ namespace Practice.Services.Implementations
             _studentRepo.Add(student);
             await _studentRepo.SaveAsync();
 
-            await _auditService.LogActionAsync(user.UserId, "Register", "Новий студент", "Student", user.UserId);
+            await _auditService.LogActionAsync(user.UserId, "Register", $"Зареєстровано студента: {user.Email}", "Student", student.StudentId);
             return true;
         }
 
         public async Task<bool> RegisterSupervisorAsync(User user, string password, int? departmentId, int? positionId, string? phone)
         {
-            // Валідація
             if (string.IsNullOrWhiteSpace(user.Email)) throw new ArgumentException("Email обов'язковий");
-            if (departmentId.HasValue)
-            {
-                var dept = await _departmentRepo.GetByIdAsync(departmentId.Value);
-                if (dept == null) throw new ArgumentException("Кафедра не знайдена");
-            }
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
             _userRepo.Add(user);
@@ -100,23 +89,16 @@ namespace Practice.Services.Implementations
             _supervisorRepo.Add(supervisor);
             await _supervisorRepo.SaveAsync();
 
+            await _auditService.LogActionAsync(user.UserId, "Register", $"Зареєстровано керівника: {user.Email}", "Supervisor", supervisor.SupervisorId);
             return true;
         }
 
-        public async Task<IEnumerable<StudentGroup>> GetAllGroupsAsync()
-        {
-            return await _groupRepo.GetAllAsync();
-        }
-
-        public async Task<IEnumerable<Department>> GetAllDepartmentsAsync()
-        {
-            return await _departmentRepo.GetAllAsync();
-        }
+        public async Task<IEnumerable<StudentGroup>> GetAllGroupsAsync() => await _groupRepo.GetAllAsync();
+        public async Task<IEnumerable<Department>> GetAllDepartmentsAsync() => await _departmentRepo.GetAllAsync();
 
         public async Task<StudentGroup> CreateGroupAsync(string code, int specialtyId, int year)
         {
             if (string.IsNullOrWhiteSpace(code)) throw new ArgumentException("Код групи не може бути пустим");
-
             var group = new StudentGroup
             {
                 GroupCode = code,
@@ -125,16 +107,17 @@ namespace Practice.Services.Implementations
             };
             _groupRepo.Add(group);
             await _groupRepo.SaveAsync();
+            await _auditService.LogActionAsync(null, "Create", $"Створено групу: {code}", "StudentGroup", group.GroupId);
             return group;
         }
 
         public async Task<Department> CreateDepartmentAsync(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Назва кафедри обов'язкова");
-
             var dept = new Department { DepartmentName = name };
             _departmentRepo.Add(dept);
             await _departmentRepo.SaveAsync();
+            await _auditService.LogActionAsync(null, "Create", $"Створено кафедру: {name}", "Department", dept.DepartmentId);
             return dept;
         }
     }

@@ -80,36 +80,35 @@ namespace Practice.Data.Context
                 .HasForeignKey(ce => ce.CourseId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Обмеження
             modelBuilder.Entity<InternshipAssignment>()
                 .HasOne(a => a.InternshipTopic)
                 .WithMany(t => t.InternshipAssignments)
                 .HasForeignKey(a => a.TopicId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<InternshipAssignment>()
                 .HasOne(a => a.Student)
                 .WithMany(s => s.InternshipAssignments)
                 .HasForeignKey(a => a.StudentId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Course>()
                 .HasOne(c => c.Discipline)
                 .WithMany(d => d.Courses)
                 .HasForeignKey(c => c.DisciplineId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<InternshipTopic>()
                 .HasOne(t => t.Organization)
                 .WithMany(o => o.InternshipTopics)
                 .HasForeignKey(t => t.OrganizationId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AuditLog>()
                 .HasOne(l => l.User)
                 .WithMany(u => u.AuditLogs)
                 .HasForeignKey(l => l.UserId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -21,5 +21,10 @@ namespace Practice.Repositories.Implementations
                 .Include(e => e.StudentGroup)
                 .ToListAsync();
         }
+        public async Task<bool> IsEnrolledAsync(int studentId, int courseId)
+        {
+            return await _context.CourseEnrollments
+                .AnyAsync(e => e.StudentId == studentId && e.CourseId == courseId);
+        }
     }
 }

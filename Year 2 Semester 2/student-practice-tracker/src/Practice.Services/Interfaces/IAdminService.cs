@@ -6,42 +6,39 @@ namespace Practice.Services.Interfaces
 {
     public interface IAdminService
     {
-        // Спеціальності
+        Task<List<Student>> GetStudentsByGroupAsync(int? groupId);
+        Task<Student?> GetStudentByIdAsync(int studentId);
+        Task UpdateStudentAsync(int studentId, string firstName, string lastName, string email, string recordBook, int groupId);
+        Task DeleteStudentAsync(int userId); 
+
+        Task<List<Supervisor>> GetSupervisorsByDeptAsync(int? deptId);
+        Task<Supervisor?> GetSupervisorByIdAsync(int supervisorId);
+        Task UpdateSupervisorAsync(int supervisorId, string firstName, string lastName, string email, string phone, int deptId, int? posId);
+        Task DeleteSupervisorAsync(int userId);
+
         Task<IEnumerable<Specialty>> GetAllSpecialtiesAsync();
         Task AddSpecialtyAsync(Specialty specialty);
         Task UpdateSpecialtyAsync(Specialty specialty);
         Task DeleteSpecialtyAsync(int id);
 
-        // Групи (CRUD)
         Task<IEnumerable<StudentGroup>> GetAllGroupsAsync();
         Task AddGroupAsync(StudentGroup group);
         Task UpdateGroupAsync(StudentGroup group);
         Task DeleteGroupAsync(int id);
 
-        // Кафедри
         Task<IEnumerable<Department>> GetAllDepartmentsAsync();
         Task AddDepartmentAsync(Department department);
         Task UpdateDepartmentAsync(Department department);
         Task DeleteDepartmentAsync(int id);
 
-        // Позиції (Посади)
         Task<IEnumerable<Position>> GetAllPositionsAsync();
         Task AddPositionAsync(Position position);
         Task DeletePositionAsync(int id);
 
-        // Дисципліни
-        Task<IEnumerable<Discipline>> GetAllDisciplinesAsync();
-        Task AddDisciplineAsync(Discipline discipline);
+        Task<IEnumerable<Discipline>> GetAllDisciplinesAsync(); 
         Task DeleteDisciplineAsync(int id);
 
-        // Організації (Повний CRUD)
-        Task<IEnumerable<Organization>> GetAllOrganizationsAsync();
-        Task AddOrganizationAsync(Organization org);
         Task UpdateOrganizationAsync(Organization org);
         Task DeleteOrganizationAsync(int id);
-        
-        
-        Task<List<Student>> GetStudentsByGroupAsync(int? groupId);
-        Task<List<Supervisor>> GetSupervisorsByDeptAsync(int? deptId);
     }
 }

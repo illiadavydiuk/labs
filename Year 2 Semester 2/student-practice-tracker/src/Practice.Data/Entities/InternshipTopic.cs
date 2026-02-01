@@ -13,6 +13,9 @@ namespace Practice.Data.Entities
         public int? OrganizationId { get; set; }
         [ForeignKey("OrganizationId")]
         public virtual Organization Organization { get; set; }
+        public int? DisciplineId { get; set; }
+        [ForeignKey("DisciplineId")]
+        public virtual Discipline Discipline { get; set; }
 
         [Required, StringLength(1000)]
         public string Title { get; set; }

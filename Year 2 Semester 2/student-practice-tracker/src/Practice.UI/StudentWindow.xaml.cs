@@ -1,136 +1,244 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Microsoft.Win32;
-using Practice.Data.Context;
 using Practice.Data.Entities;
-using Practice.Repositories.Implementations;
-using Practice.Services.Implementations;
+using Practice.Services.Interfaces;
 
 namespace Practice.Windows
 {
     public partial class StudentWindow : Window
     {
         private readonly User _currentUser;
-        private readonly AppDbContext _context;
-        private readonly PracticeService _practiceService;
-        private readonly ReviewService _reviewService;
+        private readonly IStudentService _studentService;
 
-        private string _selectedFilePath;
+        private Student _currentStudent;
+        private Course _selectedCourse;
+        private InternshipAssignment _currentAssignment;
 
-        public StudentWindow(User user)
+        private ObservableCollection<Attachment> _tempAttachments = new ObservableCollection<Attachment>();
+        private List<InternshipTopic> _allCachedTopics = new List<InternshipTopic>(); // Кеш тем
+
+        public StudentWindow(User user, IStudentService studentService)
         {
             InitializeComponent();
             _currentUser = user;
-            TxtStudentName.Text = $"{user.FirstName} {user.LastName}";
+            _studentService = studentService;
 
-            _context = new AppDbContext();
-            var topicRepo = new InternshipTopicRepository(_context);
-            var assignRepo = new InternshipAssignmentRepository(_context);
-            var statusRepo = new AssignmentStatusRepository(_context);
-            var orgRepo = new OrganizationRepository(_context);
-            var reportRepo = new ReportRepository(_context);
-            var attachRepo = new AttachmentRepository(_context);
-            var auditRepo = new AuditLogRepository(_context);
-            var auditService = new AuditService(auditRepo);
-
-            _practiceService = new PracticeService(topicRepo, assignRepo, statusRepo, orgRepo, auditService);
-            _reviewService = new ReviewService(reportRepo, attachRepo, auditService);
-
-            LoadTopics();
-            LoadCurrentAssignment();
+            ListAttachments.ItemsSource = _tempAttachments;
+            InitStudent();
         }
 
-        private async void LoadTopics()
+        private async void InitStudent()
         {
-            GridTopics.ItemsSource = await _practiceService.GetAvailableTopicsAsync();
-        }
-
-        private async void LoadCurrentAssignment()
-        {
-
-            int studentId = _currentUser.Student?.StudentId ?? 0;
-            if (studentId == 0)
+            try
             {
-                var student = await new StudentRepository(_context).GetByUserIdAsync(_currentUser.UserId);
-                if (student != null) studentId = student.StudentId;
+                _currentStudent = await _studentService.GetStudentProfileAsync(_currentUser.UserId);
+                if (_currentStudent == null) { MessageBox.Show("Помилка профілю."); Close(); return; }
+
+                TxtStudentName.Text = $"{_currentStudent.User.LastName} {_currentStudent.User.FirstName} ({_currentStudent.StudentGroup.GroupCode})";
+                LoadCourses();
             }
+            catch (Exception ex) { MessageBox.Show("Помилка ініціалізації: " + ex.Message); }
+        }
 
-            if (studentId != 0)
+        private async void LoadCourses()
+        {
+            var courses = await _studentService.GetEnrolledCoursesAsync(_currentStudent.StudentId);
+            CmbCurrentCourse.ItemsSource = courses;
+            if (courses.Any()) CmbCurrentCourse.SelectedIndex = 0;
+        }
+
+        private void CmbCurrentCourse_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _currentAssignment = null;
+            _selectedCourse = CmbCurrentCourse.SelectedItem as Course;
+
+            CmbFilterOrg.ItemsSource = null;
+            TxtFeedback.Text = "Завантаження...";
+
+            RefreshAllData();
+        }
+
+        private async void RefreshAllData()
+        {
+            if (_selectedCourse == null) return;
+
+            try
             {
-                var assignment = await _practiceService.GetStudentAssignmentAsync(studentId);
-                if (assignment != null)
+                _currentAssignment = await _studentService.GetAssignmentAsync(_currentStudent.StudentId, _selectedCourse.CourseId);
+                UpdateUIState();
+                LoadHistory();
+            }
+            catch (Exception ex) { MessageBox.Show("Помилка оновлення даних: " + ex.Message); }
+        }
+
+        private async void LoadHistory()
+        {
+            if (_currentAssignment != null)
+            {
+                ListHistory.ItemsSource = await _studentService.GetAssignmentHistoryAsync(_currentAssignment.AssignmentId);
+            }
+            else
+            {
+                ListHistory.ItemsSource = null;
+            }
+        }
+
+        private void UpdateUIState()
+        {
+            _tempAttachments.Clear();
+            TxtReportComment.Clear();
+            TxtReportLink.Clear();
+            TxtFeedback.Text = "Відгук відсутній";
+
+            var gray = (Brush)new BrushConverter().ConvertFrom("#DDD");
+            var green = (Brush)new BrushConverter().ConvertFrom("#4CAF50");
+            var blue = (Brush)new BrushConverter().ConvertFrom("#2196F3");
+            var red = (Brush)new BrushConverter().ConvertFrom("#F44336");
+
+            if (_currentAssignment == null)
+            {
+                TabReport.IsEnabled = false;
+                TabResults.IsEnabled = false;
+
+                GridTopics.Visibility = Visibility.Visible;
+                PanelFilters.Visibility = Visibility.Visible;
+                PanelTopicAlreadySelected.Visibility = Visibility.Collapsed;
+
+                Step1Circle.Fill = gray; Step2Circle.Fill = gray;
+
+                LoadTopicsForCourse();
+            }
+            else
+            {
+                TabReport.IsEnabled = true;
+                TabResults.IsEnabled = true;
+
+                GridTopics.Visibility = Visibility.Collapsed;
+                PanelFilters.Visibility = Visibility.Collapsed;
+                PanelTopicAlreadySelected.Visibility = Visibility.Visible;
+
+                Step1Circle.Fill = green;
+
+                // Керівник
+                TxtInfoSupervisor.Text = _currentAssignment.Supervisor != null
+                    ? $"{_currentAssignment.Supervisor.User.LastName} {_currentAssignment.Supervisor.User.FirstName}"
+                    : "Призначається...";
+
+                // Статус звіту
+                var report = _currentAssignment.Reports?.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+
+                if (report == null)
                 {
-                    TxtCurrentAssignment.Text = assignment.InternshipTopic.Title;
-                    TxtSupervisorName.Text = assignment.Supervisor != null
-                        ? $"Керівник: {assignment.Supervisor.User.LastName} {assignment.Supervisor.User.FirstName}"
-                        : "Керівник не призначений";
+                    Step2Circle.Fill = gray;
+                    TxtInfoStatus.Text = "Подайте звіт";
+                    BtnSubmitReport.Visibility = Visibility.Visible;
                 }
+                else
+                {
+                    TxtReportComment.Text = report.StudentComment;
+                    TxtFeedback.Text = report.SupervisorFeedback ?? "На перевірці...";
+
+                    if (report.Attachments != null)
+                        foreach (var a in report.Attachments)
+                            if (a.FileType != "URL") _tempAttachments.Add(a);
+                            else TxtReportLink.Text = a.FilePath;
+
+                    if (report.StatusId == 1) { Step2Circle.Fill = blue; BtnSubmitReport.Visibility = Visibility.Collapsed; }
+                    else if (report.StatusId == 2) { Step2Circle.Fill = red; BtnSubmitReport.Visibility = Visibility.Visible; }
+                    else if (report.StatusId == 3) { Step2Circle.Fill = green; BtnSubmitReport.Visibility = Visibility.Collapsed; }
+                }
+
+                TxtFinalGrade.Text = _currentAssignment.FinalGrade?.ToString() ?? "-";
             }
         }
 
-        private void BtnRefreshTopics_Click(object sender, RoutedEventArgs e) => LoadTopics();
+        private async void LoadTopicsForCourse()
+        {
+            if (_selectedCourse == null || _selectedCourse.DisciplineId == 0) return;
+
+            _allCachedTopics = await _studentService.GetAvailableTopicsAsync(_selectedCourse.DisciplineId, null);
+
+            var orgs = _allCachedTopics.Select(t => t.Organization).Where(o => o != null)
+                        .GroupBy(o => o.OrganizationId).Select(g => g.First()).ToList();
+
+            CmbFilterOrg.ItemsSource = orgs;
+            ApplyFilters();
+        }
+
+        private void ApplyFilters()
+        {
+            var filtered = _allCachedTopics.AsEnumerable();
+            if (CmbFilterOrg.SelectedValue is int orgId) filtered = filtered.Where(t => t.OrganizationId == orgId);
+            GridTopics.ItemsSource = filtered.ToList();
+        }
+
+        private void CmbFilterOrg_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyFilters();
+        private void BtnResetFilter_Click(object sender, RoutedEventArgs e) { CmbFilterOrg.SelectedIndex = -1; ApplyFilters(); }
+
 
         private async void BtnSelectTopic_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int topicId)
             {
-                // Для демо: CourseId=1, SupervisorId=1 (Якщо треба логіка розподілу - це окрема історія)
-                bool success = await _practiceService.AssignTopicAsync(_currentUser.UserId, topicId, 1, 1, "Завдання");
-                if (success)
+                if (MessageBox.Show("Обрати цю тему?", "Підтвердження", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    MessageBox.Show("Тему обрано!");
-                    LoadCurrentAssignment();
-                    LoadTopics();
+                    try
+                    {
+                        // ВИКЛИКАЄМО СЕРВІС (не ліземо в базу напряму!)
+                        await _studentService.SelectTopicAsync(_currentStudent.StudentId, topicId, _selectedCourse.CourseId);
+
+                        RefreshAllData();
+                        MainTabControl.SelectedIndex = 1;
+                        MessageBox.Show("Тему успішно закріплено!");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Помилка: " + ex.Message);
+                    }
                 }
             }
         }
 
-        private void BtnBrowseFile_Click(object sender, RoutedEventArgs e)
+        private void BtnGoToReport_Click(object sender, RoutedEventArgs e) => MainTabControl.SelectedIndex = 1;
+
+        private void BtnUploadFile_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dlg = new OpenFileDialog();
+            OpenFileDialog dlg = new OpenFileDialog { Multiselect = true };
             if (dlg.ShowDialog() == true)
             {
-                _selectedFilePath = dlg.FileName;
-                TxtSelectedFile.Text = Path.GetFileName(_selectedFilePath);
+                foreach (string f in dlg.FileNames)
+                    _tempAttachments.Add(new Attachment { FileName = System.IO.Path.GetFileName(f), FilePath = f, FileType = "FILE" });
             }
         }
 
         private async void BtnSubmitReport_Click(object sender, RoutedEventArgs e)
         {
-            // Отримуємо актуальний StudentId
-            var student = await new StudentRepository(_context).GetByUserIdAsync(_currentUser.UserId);
-            if (student == null) { MessageBox.Show("Помилка профілю студента"); return; }
+            if (_currentAssignment == null) return;
 
-            var assignment = await _practiceService.GetStudentAssignmentAsync(student.StudentId);
-            if (assignment == null) { MessageBox.Show("Спочатку оберіть тему!"); return; }
-            if (string.IsNullOrEmpty(_selectedFilePath)) { MessageBox.Show("Оберіть файл!"); return; }
-
-            // Копіювання файлу
-            string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StudentPracticePlatform", "Reports");
-            Directory.CreateDirectory(appDataPath);
-            string destFile = Path.Combine(appDataPath, $"{DateTime.Now.Ticks}_{Path.GetFileName(_selectedFilePath)}");
-            File.Copy(_selectedFilePath, destFile, true);
-
-            var attachment = new Attachment
+            try
             {
-                FileName = Path.GetFileName(destFile),
-                FilePath = destFile,
-                FileType = Path.GetExtension(destFile)
-            };
+                await _studentService.SubmitReportAsync(
+                    _currentAssignment.AssignmentId,
+                    TxtReportComment.Text,
+                    TxtReportLink.Text,
+                    _tempAttachments.ToList()
+                );
 
-            await _reviewService.SubmitReportAsync(assignment.AssignmentId, TxtReportComment.Text, new List<Attachment> { attachment });
-            MessageBox.Show("Звіт відправлено!");
-            TxtReportComment.Clear();
-            TxtSelectedFile.Text = "Файл не обрано";
+                MessageBox.Show("Звіт відправлено!");
+                RefreshAllData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка відправки: " + ex.Message);
+            }
         }
 
-        private void BtnLogout_Click(object sender, RoutedEventArgs e)
-        {
-            new LoginWindow().Show();
-            this.Close();
-        }
+        private void BtnLogout_Click(object sender, RoutedEventArgs e) { new LoginWindow().Show(); Close(); }
     }
 }

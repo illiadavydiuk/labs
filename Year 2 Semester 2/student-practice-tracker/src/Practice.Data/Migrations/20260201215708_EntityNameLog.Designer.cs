@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Practice.Data.Context;
 
@@ -10,9 +11,11 @@ using Practice.Data.Context;
 namespace Practice.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260201215708_EntityNameLog")]
+    partial class EntityNameLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
@@ -30,7 +33,7 @@ namespace Practice.Data.Migrations
 
                     b.HasKey("StatusId");
 
-                    b.ToTable("AssignmentStatuses", (string)null);
+                    b.ToTable("AssignmentStatuses");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Attachment", b =>
@@ -62,7 +65,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("ReportId");
 
-                    b.ToTable("Attachments", (string)null);
+                    b.ToTable("Attachments");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.AuditLog", b =>
@@ -99,7 +102,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuditLogs", (string)null);
+                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Course", b =>
@@ -130,7 +133,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("SupervisorId");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.CourseEnrollment", b =>
@@ -156,7 +159,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("CourseEnrollments", (string)null);
+                    b.ToTable("CourseEnrollments");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Department", b =>
@@ -172,7 +175,7 @@ namespace Practice.Data.Migrations
 
                     b.HasKey("DepartmentId");
 
-                    b.ToTable("Departments", (string)null);
+                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Discipline", b =>
@@ -188,7 +191,7 @@ namespace Practice.Data.Migrations
 
                     b.HasKey("DisciplineId");
 
-                    b.ToTable("Disciplines", (string)null);
+                    b.ToTable("Disciplines");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.InternshipAssignment", b =>
@@ -243,7 +246,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("TopicId");
 
-                    b.ToTable("InternshipAssignments", (string)null);
+                    b.ToTable("InternshipAssignments");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.InternshipTopic", b =>
@@ -275,7 +278,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("OrganizationId");
 
-                    b.ToTable("InternshipTopics", (string)null);
+                    b.ToTable("InternshipTopics");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Organization", b =>
@@ -304,7 +307,7 @@ namespace Practice.Data.Migrations
 
                     b.HasKey("OrganizationId");
 
-                    b.ToTable("Organizations", (string)null);
+                    b.ToTable("Organizations");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Position", b =>
@@ -320,7 +323,7 @@ namespace Practice.Data.Migrations
 
                     b.HasKey("PositionId");
 
-                    b.ToTable("Positions", (string)null);
+                    b.ToTable("Positions");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Report", b =>
@@ -353,7 +356,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("StatusId");
 
-                    b.ToTable("Reports", (string)null);
+                    b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.ReportStatus", b =>
@@ -369,7 +372,7 @@ namespace Practice.Data.Migrations
 
                     b.HasKey("StatusId");
 
-                    b.ToTable("ReportStatuses", (string)null);
+                    b.ToTable("ReportStatuses");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Role", b =>
@@ -385,7 +388,7 @@ namespace Practice.Data.Migrations
 
                     b.HasKey("RoleId");
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Specialty", b =>
@@ -410,7 +413,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("DepartmentId");
 
-                    b.ToTable("Specialties", (string)null);
+                    b.ToTable("Specialties");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Student", b =>
@@ -437,7 +440,7 @@ namespace Practice.Data.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Students", (string)null);
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.StudentGroup", b =>
@@ -460,7 +463,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("SpecialtyId");
 
-                    b.ToTable("StudentGroups", (string)null);
+                    b.ToTable("StudentGroups");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Supervisor", b =>
@@ -490,7 +493,7 @@ namespace Practice.Data.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Supervisors", (string)null);
+                    b.ToTable("Supervisors");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.User", b =>
@@ -528,7 +531,7 @@ namespace Practice.Data.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Practice.Data.Entities.Attachment", b =>

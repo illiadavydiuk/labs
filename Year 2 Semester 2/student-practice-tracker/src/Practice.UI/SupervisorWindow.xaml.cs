@@ -1,98 +1,208 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.EntityFrameworkCore;
-using Practice.Data.Context;
+using System.Windows.Input;
+using System.Windows.Media;
 using Practice.Data.Entities;
-using Practice.Repositories.Implementations;
-using Practice.Services.Implementations;
+using Practice.Services.Interfaces;
 
 namespace Practice.Windows
 {
     public partial class SupervisorWindow : Window
     {
         private readonly User _currentUser;
-        private readonly AppDbContext _context;
-        private readonly ReviewService _reviewService;
+        private readonly ISupervisorService _supervisorService;
 
-        // КОНСТРУКТОР З ПАРАМЕТРОМ (Виправляє помилку CS1729)
-        public SupervisorWindow(User user)
+        private Supervisor _currentSupervisor;
+        private List<InternshipAssignment> _allAssignments = new List<InternshipAssignment>();
+        private InternshipAssignment _selectedAssignment;
+
+        public SupervisorWindow(User user, ISupervisorService supervisorService)
         {
             InitializeComponent();
             _currentUser = user;
-            TxtName.Text = $"{user.FirstName} {user.LastName}";
+            _supervisorService = supervisorService;
 
-            _context = new AppDbContext();
-
-            // Ініціалізація сервісів
-            var reportRepo = new ReportRepository(_context);
-            var attachRepo = new AttachmentRepository(_context);
-            var auditRepo = new AuditLogRepository(_context);
-            var auditService = new AuditService(auditRepo);
-
-            _reviewService = new ReviewService(reportRepo, attachRepo, auditService);
-
-            LoadReports();
+            Init();
         }
 
-        private async void LoadReports()
+        private async void Init()
         {
-            // Завантажуємо звіти. В ідеалі фільтрувати за SupervisorId, але для демо беремо всі, де є призначення
-            // Щоб фільтрувати, треба знайти SupervisorId поточного юзера:
-            // var supId = _context.Supervisors.FirstOrDefault(s => s.UserId == _currentUser.UserId)?.SupervisorId;
-
-            var reports = await _context.Reports
-                .Include(r => r.InternshipAssignment).ThenInclude(i => i.Student).ThenInclude(s => s.User)
-                .Include(r => r.InternshipAssignment).ThenInclude(i => i.InternshipTopic)
-                .Include(r => r.ReportStatus)
-                .Include(r => r.Attachments)
-                .OrderByDescending(r => r.SubmissionDate)
-                .ToListAsync();
-
-            GridReports.ItemsSource = reports;
-        }
-
-        private void BtnRefresh_Click(object sender, RoutedEventArgs e) => LoadReports();
-
-        private void GridReports_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (GridReports.SelectedItem is Report report)
+            try
             {
+                _currentSupervisor = await _supervisorService.GetSupervisorProfileAsync(_currentUser.UserId);
+                if (_currentSupervisor == null)
+                {
+                    MessageBox.Show("Профіль викладача не знайдено.");
+                    Close();
+                    return;
+                }
+
+                TxtSupervisorName.Text = $"{_currentSupervisor.User.LastName} {_currentSupervisor.User.FirstName.FirstOrDefault()}.";
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка ініціалізації: " + ex.Message);
+            }
+        }
+
+        private async System.Threading.Tasks.Task LoadData()
+        {
+            _allAssignments = await _supervisorService.GetStudentsForSupervisorAsync(_currentSupervisor.SupervisorId);
+
+            CmbFilterCourse.ItemsSource = _allAssignments.Select(a => a.Course).DistinctBy(c => c.CourseId).ToList();
+            CmbFilterGroup.ItemsSource = _allAssignments.Select(a => a.Student.StudentGroup).DistinctBy(g => g.GroupId).ToList();
+
+            RenderList();
+        }
+
+        private void RenderList()
+        {
+            var filtered = _allAssignments.AsEnumerable();
+
+            if (CmbFilterCourse.SelectedValue is int courseId)
+                filtered = filtered.Where(a => a.CourseId == courseId);
+
+            if (CmbFilterGroup.SelectedValue is int groupId)
+                filtered = filtered.Where(a => a.Student.GroupId == groupId);
+
+            var uiList = filtered.Select(a => new
+            {
+                AssignmentId = a.AssignmentId,
+                StudentName = $"{a.Student.User.LastName} {a.Student.User.FirstName}",
+                GroupCode = a.Student.StudentGroup.GroupCode,
+                CourseName = a.Course.Name,
+                TopicTitle = a.InternshipTopic?.Title ?? "Тема не обрана",
+                ReportStatus = GetStatusText(a),
+                StatusColor = GetStatusColor(a)
+            }).ToList();
+
+            ListStudents.ItemsSource = uiList;
+        }
+
+        private string GetStatusText(InternshipAssignment a)
+        {
+            if (a.FinalGrade.HasValue) return "Оцінено";
+            var report = a.Reports.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+            if (report == null) return "Без звіту";
+            return report.StatusId switch { 1 => "На перевірці", 2 => "Повернуто", 3 => "Прийнято", _ => "В процесі" };
+        }
+
+        private string GetStatusColor(InternshipAssignment a)
+        {
+            if (a.FinalGrade.HasValue) return "#4CAF50";
+            var report = a.Reports.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+            if (report == null) return "#9E9E9E";
+            if (report.StatusId == 1) return "#FF9800";
+            if (report.StatusId == 2) return "#F44336";
+            return "#2196F3";
+        }
+
+        private void StudentCard_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border border && border.Tag is int assignmentId)
+            {
+                _selectedAssignment = _allAssignments.FirstOrDefault(a => a.AssignmentId == assignmentId);
+                if (_selectedAssignment != null)
+                {
+                    ShowDetails(_selectedAssignment);
+                }
+            }
+        }
+
+        private void ShowDetails(InternshipAssignment a)
+        {
+            PanelEmpty.Visibility = Visibility.Collapsed;
+            PanelContent.Visibility = Visibility.Visible;
+
+            TxtActiveStudent.Text = $"{a.Student.User.LastName} {a.Student.User.FirstName}";
+            TxtActiveTopic.Text = a.InternshipTopic?.Title ?? "-";
+            TxtActiveOrg.Text = a.InternshipTopic?.Organization?.Name ?? "-";
+
+            var report = a.Reports.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+
+            if (report != null)
+            {
+                TxtReportDate.Text = "Дата: " + report.SubmissionDate.ToString("dd.MM.yyyy HH:mm");
                 TxtStudentComment.Text = report.StudentComment;
-                ListFiles.ItemsSource = report.Attachments;
-                TxtInfo.Text = $"Обрано звіт ID: {report.ReportId}";
+                TxtStudentLink.Text = report.Attachments.FirstOrDefault(at => at.FileType == "URL")?.FilePath ?? "Немає посилання";
+
+                ListAttachments.ItemsSource = report.Attachments.Where(at => at.FileType != "URL").ToList();
+                TxtSupervisorFeedback.Text = report.SupervisorFeedback;
+
+                foreach (ComboBoxItem item in CmbReportStatus.Items)
+                {
+                    if (item.Tag.ToString() == report.StatusId.ToString())
+                    {
+                        CmbReportStatus.SelectedItem = item;
+                        break;
+                    }
+                }
+                UpdateTimeline(true, true, a.FinalGrade.HasValue);
             }
             else
             {
-                TxtStudentComment.Clear();
-                ListFiles.ItemsSource = null;
-                TxtInfo.Text = "";
+                TxtReportDate.Text = "Звіт ще не подано";
+                TxtStudentComment.Text = "-";
+                TxtStudentLink.Text = "-";
+                ListAttachments.ItemsSource = null;
+                TxtSupervisorFeedback.Text = "";
+                CmbReportStatus.SelectedIndex = -1;
+                UpdateTimeline(true, false, false);
             }
+
+            TxtFinalGrade.Text = a.FinalGrade?.ToString() ?? "";
         }
 
-        private async void BtnApprove_Click(object sender, RoutedEventArgs e) => await ProcessReview(2); // 2 = Approved
-        private async void BtnReject_Click(object sender, RoutedEventArgs e) => await ProcessReview(3); // 3 = Rejected
-
-        private async System.Threading.Tasks.Task ProcessReview(int statusId)
+        private void UpdateTimeline(bool step1, bool step2, bool step3)
         {
-            if (GridReports.SelectedItem is Report report)
+            var green = (Brush)new BrushConverter().ConvertFrom("#4CAF50");
+            var gray = (Brush)new BrushConverter().ConvertFrom("#DDD");
+
+            Step1Circle.Background = step1 ? green : gray;
+            Line1.Fill = step1 ? green : gray;
+            Step2Circle.Background = step2 ? green : gray;
+            Line2.Fill = step2 ? green : gray;
+            Step3Circle.Background = step3 ? green : gray;
+        }
+
+        private async void BtnSaveAssessment_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedAssignment == null) return;
+            try
             {
-                await _reviewService.ReviewReportAsync(report.ReportId, statusId, TxtFeedback.Text);
-                MessageBox.Show("Статус оновлено!");
-                TxtFeedback.Clear();
-                LoadReports();
+                string feedback = TxtSupervisorFeedback.Text;
+                int? grade = null;
+                if (int.TryParse(TxtFinalGrade.Text, out int g)) grade = g;
+
+                int? statusId = null;
+                if (CmbReportStatus.SelectedItem is ComboBoxItem item)
+                    statusId = int.Parse(item.Tag.ToString());
+
+                await _supervisorService.SaveAssessmentAsync(_selectedAssignment.AssignmentId, feedback, grade, statusId);
+                MessageBox.Show("Зміни збережено!");
+                await LoadData();
+
+                _selectedAssignment = _allAssignments.First(a => a.AssignmentId == _selectedAssignment.AssignmentId);
+                ShowDetails(_selectedAssignment);
             }
-            else
+            catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
+        }
+
+        private void BtnOpenFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string path)
             {
-                MessageBox.Show("Оберіть звіт зі списку!");
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = path, UseShellExecute = true }); }
+                catch { MessageBox.Show("Не вдалося відкрити файл."); }
             }
         }
 
-        private void BtnLogout_Click(object sender, RoutedEventArgs e)
-        {
-            new LoginWindow().Show();
-            this.Close();
-        }
+        private void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e) => RenderList();
+        private void BtnResetFilters_Click(object sender, RoutedEventArgs e) { CmbFilterCourse.SelectedIndex = -1; CmbFilterGroup.SelectedIndex = -1; RenderList(); }
+        private void BtnLogout_Click(object sender, RoutedEventArgs e) { new LoginWindow().Show(); Close(); }
     }
 }

@@ -20,5 +20,14 @@ namespace Practice.Repositories.Implementations
                 .Include(c => c.Discipline)
                 .ToListAsync();
         }
+        public async Task<IEnumerable<Course>> GetAllActiveAsync()
+        {
+            return await _context.Courses
+                .AsNoTracking()
+                .Include(c => c.Discipline)
+                .Include(c => c.Supervisor).ThenInclude(s => s.User)
+                .Where(c => c.IsActive)
+                .ToListAsync();
+        }
     }
 }

@@ -25,5 +25,6 @@ namespace Practice.Data.Entities
         public string? Phone { get; set; }
 
         public virtual ICollection<InternshipAssignment> InternshipAssignments { get; set; }
+        public virtual ICollection<Course> Courses { get; set; }
     }
 }

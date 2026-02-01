@@ -1,8 +1,73 @@
 ﻿<Window x:Class="Practice.Windows.AdminWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Admin Dashboard" Height="850" Width="1300"
+        Title="Admin Dashboard" Height="850" Width="1350"
         WindowStartupLocation="CenterScreen" Background="White">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#2196F3"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#212121"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#757575"/>
+
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="Gray"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
+        </Style>
+
+        <Style x:Key="IconButton" TargetType="Button">
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="3"/>
+                </Style>
+            </Style.Resources>
+
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+        <Style x:Key="SidebarRadio" TargetType="RadioButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="10" Margin="0,2" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E3F2FD"/>
+                                <Setter Property="Foreground" Value="#2196F3"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="False">
+                                <Setter TargetName="Bd" Property="Background" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="#455A64"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Geometry x:Key="IconPencil">M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z</Geometry>
+        <Geometry x:Key="IconClose">M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z</Geometry>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -16,7 +81,6 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-
             <StackPanel Orientation="Horizontal">
                 <Border Background="{StaticResource PrimaryColor}" Width="40" Height="40" CornerRadius="8">
                     <TextBlock Text="A" Foreground="White" FontWeight="Bold" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -26,27 +90,24 @@
                     <TextBlock Text="Система управління" FontSize="12" Foreground="{StaticResource TextSecondary}"/>
                 </StackPanel>
             </StackPanel>
-
             <StackPanel Grid.Column="2" Orientation="Horizontal">
                 <TextBlock x:Name="TxtAdminName" Text="Admin" VerticalAlignment="Center" Margin="0,0,15,0" FontWeight="SemiBold"/>
                 <Border Width="40" Height="40" CornerRadius="20" Background="{StaticResource PrimaryColor}" Margin="0,0,15,0">
                     <TextBlock x:Name="TxtInitials" Text="AD" Foreground="White" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
-                <Button Content="Вийти" Click="BtnLogout_Click" Background="#FFEBEE" Foreground="#D32F2F" Height="35"/>
+                <Button Content="Вийти" Click="BtnLogout_Click" Background="#FFEBEE" Foreground="#D32F2F" Height="35" Padding="15,0" BorderThickness="0"/>
             </StackPanel>
         </Grid>
 
         <TabControl Grid.Row="1" Margin="10,0,10,10" BorderThickness="0">
-
             <TabItem Header="Студенти">
                 <Grid Margin="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="320"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
                     <Border BorderBrush="#EEE" BorderThickness="0,0,1,0" Padding="0,0,20,0">
-                        <ScrollViewer>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
                                 <TextBlock Text="Додати студента" FontSize="18" FontWeight="Bold" Margin="0,0,0,20" Foreground="{StaticResource PrimaryColor}"/>
                                 <TextBlock Text="Прізвище" Style="{StaticResource LabelStyle}"/>
@@ -61,27 +122,25 @@
                                 <ComboBox x:Name="CmbStudGroup" DisplayMemberPath="GroupCode" SelectedValuePath="GroupId" Margin="0,0,0,10"/>
                                 <TextBlock Text="Залікова книжка" Style="{StaticResource LabelStyle}"/>
                                 <TextBox x:Name="TxtStudRecord" Margin="0,0,0,20"/>
-                                <Button Content="Зберегти студента" Click="BtnAddStudent_Click"/>
+                                <Button Content="Зберегти студента" Click="BtnAddStudent_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
                                 <Separator Margin="0,20"/>
-                                <Button Content="Масовий імпорт..." Background="#4CAF50" Click="BtnToggleImport_Click"/>
+                                <Button Content="Масовий імпорт..." Click="BtnToggleImport_Click" Background="#FF9800" Foreground="White" Padding="10" BorderThickness="0"/>
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
-
                     <Grid Grid.Column="1" Margin="20,0,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                             <TextBlock Text="Фільтр:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <ComboBox x:Name="CmbFilterGroup" Width="150" DisplayMemberPath="GroupCode" SelectedValuePath="GroupId" SelectionChanged="CmbFilterGroup_SelectionChanged"/>
-                            <Button Content="Очистити" Click="BtnResetStudentFilter_Click" Background="#90A4AE" Margin="10,0,0,0" Padding="10,5"/>
+                            <Button Content="Очистити" Click="BtnResetStudentFilter_Click" Background="#90A4AE" Foreground="White" Margin="10,0,0,0" Padding="10,5" BorderThickness="0"/>
                         </StackPanel>
 
-                        <Border x:Name="PanelImport" Grid.Row="1" Background="#F1F8E9" Padding="15" Margin="0,0,0,15" Visibility="Collapsed" CornerRadius="4">
+                        <Border x:Name="PanelImport" Grid.Row="1" Background="#FFF8E1" Padding="15" Margin="0,0,0,15" Visibility="Collapsed" CornerRadius="4">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="300"/>
@@ -89,15 +148,12 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Margin="0,0,20,0">
                                     <TextBlock Text="Імпорт списком" FontWeight="Bold" Margin="0,0,0,10"/>
-                                    <TextBlock Text="Група:" Style="{StaticResource LabelStyle}"/>
                                     <ComboBox x:Name="CmbImportGroup" DisplayMemberPath="GroupCode" SelectedValuePath="GroupId" Margin="0,0,0,10"/>
-                                    <TextBlock Text="Домен (@example.com):" Style="{StaticResource LabelStyle}"/>
                                     <TextBox x:Name="TxtImportDomain" Text="@student.university.edu" Margin="0,0,0,10"/>
-                                    <TextBlock Text="Список (Прізвище Ім'я):" Style="{StaticResource LabelStyle}"/>
                                     <TextBox x:Name="TxtRawNames" Height="100" AcceptsReturn="True" TextWrapping="Wrap"/>
                                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                        <Button Content="Обробити" Click="BtnProcessImport_Click" Width="100"/>
-                                        <Button Content="Закрити" Click="BtnCancelImport_Click" Background="Transparent" Foreground="Gray" Margin="10,0,0,0"/>
+                                        <Button Content="Обробити" Click="BtnProcessImport_Click" Width="100" Background="#2196F3" Foreground="White" BorderThickness="0"/>
+                                        <Button Content="Закрити" Click="BtnCancelImport_Click" Background="Transparent" Foreground="Gray" Margin="10,0,0,0" BorderThickness="0"/>
                                     </StackPanel>
                                 </StackPanel>
                                 <Grid Grid.Column="1">
@@ -105,22 +161,20 @@
                                         <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="200">
-                                        <DataGrid x:Name="GridImportPreview" AutoGenerateColumns="False" CanUserAddRows="False">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="Прізвище" Binding="{Binding LastName}" Width="*"/>
-                                                <DataGridTextColumn Header="Ім'я" Binding="{Binding FirstName}" Width="*"/>
-                                                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
-                                                <DataGridTextColumn Header="Заліковка" Binding="{Binding RecordBook}" Width="100"/>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                    </ScrollViewer>
-                                    <Button Grid.Row="1" Content="ЗБЕРЕГТИ ВСІХ" Click="BtnSaveImport_Click" HorizontalAlignment="Right" Margin="0,10,0,0" Width="150" Background="#4CAF50"/>
+                                    <DataGrid x:Name="GridImportPreview" AutoGenerateColumns="False" CanUserAddRows="False" Height="200" Background="White">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Прізвище" Binding="{Binding LastName}" Width="*"/>
+                                            <DataGridTextColumn Header="Ім'я" Binding="{Binding FirstName}" Width="*"/>
+                                            <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
+                                            <DataGridTextColumn Header="Заліковка" Binding="{Binding RecordBook}" Width="100"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    <Button Grid.Row="1" Content="ЗБЕРЕГТИ ВСІХ" Click="BtnSaveImport_Click" HorizontalAlignment="Right" Margin="0,10,0,0" Width="150" Background="#4CAF50" Foreground="White" BorderThickness="0" Padding="10"/>
                                 </Grid>
                             </Grid>
                         </Border>
 
-                        <DataGrid Grid.Row="2" x:Name="GridAllStudents" IsReadOnly="True" CanUserSortColumns="True">
+                        <DataGrid Grid.Row="2" x:Name="GridAllStudents" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Прізвище" Binding="{Binding User.LastName}" Width="150"/>
                                 <DataGridTextColumn Header="Ім'я" Binding="{Binding User.FirstName}" Width="150"/>
@@ -131,7 +185,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
-                                                <Button Style="{StaticResource IconButton}" Background="#FF9800" Click="BtnEditStudent_Click" Tag="{Binding StudentId}" Margin="0,0,5,0">
+                                                <Button Style="{StaticResource IconButton}" Background="#FF9800" Click="BtnEditStudent_Click" Tag="{Binding StudentId}">
                                                     <Path Data="{StaticResource IconPencil}" Fill="White" Stretch="Uniform" Margin="2"/>
                                                 </Button>
                                                 <Button Style="{StaticResource IconButton}" Background="#F44336" Click="BtnDeleteStudent_Click" Tag="{Binding UserId}">
@@ -154,26 +208,24 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Border BorderBrush="#EEE" BorderThickness="0,0,1,0" Padding="0,0,20,0">
-                        <ScrollViewer>
-                            <StackPanel>
-                                <TextBlock Text="Додати керівника" FontSize="18" FontWeight="Bold" Margin="0,0,0,20" Foreground="{StaticResource PrimaryColor}"/>
-                                <TextBlock Text="Прізвище" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="TxtSupLast" Margin="0,0,0,10"/>
-                                <TextBlock Text="Ім'я" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="TxtSupFirst" Margin="0,0,0,10"/>
-                                <TextBlock Text="Email" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="TxtSupEmail" Margin="0,0,0,10"/>
-                                <TextBlock Text="Пароль" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="TxtSupPass" Margin="0,0,0,10"/>
-                                <TextBlock Text="Кафедра" Style="{StaticResource LabelStyle}"/>
-                                <ComboBox x:Name="CmbSupDept" DisplayMemberPath="DepartmentName" SelectedValuePath="DepartmentId" Margin="0,0,0,10"/>
-                                <TextBlock Text="Посада" Style="{StaticResource LabelStyle}"/>
-                                <ComboBox x:Name="CmbSupPos" DisplayMemberPath="PositionName" SelectedValuePath="PositionId" Margin="0,0,0,10"/>
-                                <TextBlock Text="Телефон" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="TxtSupPhone" Margin="0,0,0,20"/>
-                                <Button Content="Зберегти керівника" Click="BtnAddSupervisor_Click"/>
-                            </StackPanel>
-                        </ScrollViewer>
+                        <StackPanel>
+                            <TextBlock Text="Додати керівника" FontSize="18" FontWeight="Bold" Margin="0,0,0,20" Foreground="{StaticResource PrimaryColor}"/>
+                            <TextBlock Text="Прізвище" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtSupLast" Margin="0,0,0,10"/>
+                            <TextBlock Text="Ім'я" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtSupFirst" Margin="0,0,0,10"/>
+                            <TextBlock Text="Email" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtSupEmail" Margin="0,0,0,10"/>
+                            <TextBlock Text="Пароль" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtSupPass" Margin="0,0,0,10"/>
+                            <TextBlock Text="Кафедра" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbSupDept" DisplayMemberPath="DepartmentName" SelectedValuePath="DepartmentId" Margin="0,0,0,10"/>
+                            <TextBlock Text="Посада" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbSupPos" DisplayMemberPath="PositionName" SelectedValuePath="PositionId" Margin="0,0,0,10"/>
+                            <TextBlock Text="Телефон" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtSupPhone" Margin="0,0,0,20"/>
+                            <Button Content="Зберегти керівника" Click="BtnAddSupervisor_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
+                        </StackPanel>
                     </Border>
                     <Grid Grid.Column="1" Margin="20,0,0,0">
                         <Grid.RowDefinitions>
@@ -183,9 +235,9 @@
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                             <TextBlock Text="Фільтр:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <ComboBox x:Name="CmbFilterDept" Width="200" DisplayMemberPath="DepartmentName" SelectedValuePath="DepartmentId" SelectionChanged="CmbFilterDept_SelectionChanged"/>
-                            <Button Content="Очистити" Click="BtnResetSupervisorFilter_Click" Background="#90A4AE" Margin="10,0,0,0" Padding="10,5"/>
+                            <Button Content="Очистити" Click="BtnResetSupervisorFilter_Click" Background="#90A4AE" Foreground="White" Margin="10,0,0,0" Padding="10,5" BorderThickness="0"/>
                         </StackPanel>
-                        <DataGrid Grid.Row="1" x:Name="GridAllSupervisors" IsReadOnly="True" CanUserSortColumns="True">
+                        <DataGrid Grid.Row="1" x:Name="GridAllSupervisors" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Прізвище" Binding="{Binding User.LastName}" Width="150"/>
                                 <DataGridTextColumn Header="Ім'я" Binding="{Binding User.FirstName}" Width="150"/>
@@ -197,7 +249,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
-                                                <Button Style="{StaticResource IconButton}" Background="#FF9800" Click="BtnEditSupervisor_Click" Tag="{Binding SupervisorId}" Margin="0,0,5,0">
+                                                <Button Style="{StaticResource IconButton}" Background="#FF9800" Click="BtnEditSupervisor_Click" Tag="{Binding SupervisorId}">
                                                     <Path Data="{StaticResource IconPencil}" Fill="White" Stretch="Uniform" Margin="2"/>
                                                 </Button>
                                                 <Button Style="{StaticResource IconButton}" Background="#F44336" Click="BtnDeleteSupervisor_Click" Tag="{Binding UserId}">
@@ -236,41 +288,67 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <TextBlock x:Name="TxtStructTitle" Text="Спеціальності" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" Foreground="{StaticResource PrimaryColor}"/>
+
                         <StackPanel Grid.Row="1" Margin="0,0,0,20">
                             <Grid x:Name="PanelAddSpecialty">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBox x:Name="TxtSpecCode" Width="100" Margin="0,0,10,0"/>
-                                    <TextBox x:Name="TxtSpecName" Width="300" Margin="0,0,10,0"/>
-                                    <Button Content="Додати" Click="BtnAddSpecialty_Click"/>
+                                    <StackPanel Margin="0,0,10,0">
+                                        <TextBlock Text="Кафедра" Style="{StaticResource LabelStyle}"/>
+                                        <ComboBox x:Name="CmbDeptForSpec" Width="200" DisplayMemberPath="DepartmentName" SelectedValuePath="DepartmentId"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,0">
+                                        <TextBlock Text="Код" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox x:Name="TxtSpecCode" Width="80"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,0">
+                                        <TextBlock Text="Назва" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox x:Name="TxtSpecName" Width="250"/>
+                                    </StackPanel>
+                                    <Button Content="Додати" VerticalAlignment="Bottom" Click="BtnAddSpecialty_Click" Background="#4CAF50" Foreground="White" Padding="10,5" BorderThickness="0"/>
                                 </StackPanel>
                             </Grid>
                             <Grid x:Name="PanelAddGroup" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBox x:Name="TxtGroupCode" Width="100" Margin="0,0,10,0"/>
-                                    <TextBox x:Name="TxtGroupYear" Width="80" Margin="0,0,10,0"/>
-                                    <ComboBox x:Name="CmbSpecForGroup" Width="200" DisplayMemberPath="Code" SelectedValuePath="SpecialtyId" Margin="0,0,10,0"/>
-                                    <Button Content="Додати" Click="BtnAddGroup_Click"/>
+                                    <StackPanel Margin="0,0,10,0">
+                                        <TextBlock Text="Кафедра" Style="{StaticResource LabelStyle}"/>
+                                        <ComboBox x:Name="CmbDeptForGroup" Width="150" DisplayMemberPath="DepartmentName" SelectedValuePath="DepartmentId" SelectionChanged="CmbDeptForGroup_SelectionChanged"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,0">
+                                        <TextBlock Text="Спеціальність" Style="{StaticResource LabelStyle}"/>
+                                        <ComboBox x:Name="CmbSpecForGroup" Width="150" DisplayMemberPath="Code" SelectedValuePath="SpecialtyId"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,0">
+                                        <TextBlock Text="Шифр" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox x:Name="TxtGroupCode" Width="80"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,0">
+                                        <TextBlock Text="Рік" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox x:Name="TxtGroupYear" Width="60"/>
+                                    </StackPanel>
+                                    <Button Content="Додати" VerticalAlignment="Bottom" Click="BtnAddGroup_Click" Background="#4CAF50" Foreground="White" Padding="10,5" BorderThickness="0"/>
                                 </StackPanel>
                             </Grid>
                             <Grid x:Name="PanelAddDept" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBox x:Name="TxtDeptName" Width="400" Margin="0,0,10,0"/>
-                                    <Button Content="Додати" Click="BtnAddDept_Click"/>
+                                    <Button Content="Додати" Click="BtnAddDept_Click" Background="#4CAF50" Foreground="White" Padding="10,5" BorderThickness="0"/>
                                 </StackPanel>
                             </Grid>
                             <Grid x:Name="PanelAddSimple" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBox x:Name="TxtSimpleName" Width="400" Margin="0,0,10,0"/>
-                                    <Button Content="Додати" Click="BtnAddSimple_Click"/>
+                                    <Button Content="Додати" Click="BtnAddSimple_Click" Background="#4CAF50" Foreground="White" Padding="10,5" BorderThickness="0"/>
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
+
                         <Grid Grid.Row="2">
-                            <DataGrid x:Name="GridSpecialties" CanUserSortColumns="True">
+                            <DataGrid x:Name="GridSpecialties" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Код" Binding="{Binding Code}"/>
                                     <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="*"/>
-                                    <DataGridTemplateColumn Width="100">
+                                    <DataGridTextColumn Header="Кафедра" Binding="{Binding Department.DepartmentName}" Width="200"/>
+                                    <DataGridTemplateColumn Width="100" Header="Дії">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
@@ -286,12 +364,13 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <DataGrid x:Name="GridGroups" Visibility="Collapsed" CanUserSortColumns="True">
+
+                            <DataGrid x:Name="GridGroups" Visibility="Collapsed" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Шифр" Binding="{Binding GroupCode}"/>
                                     <DataGridTextColumn Header="Рік" Binding="{Binding EntryYear}"/>
-                                    <DataGridTextColumn Header="Спец." Binding="{Binding Specialty.Code}" Width="*"/>
-                                    <DataGridTemplateColumn Width="100">
+                                    <DataGridTextColumn Header="Спец." Binding="{Binding Specialty.Name}" Width="*"/>
+                                    <DataGridTemplateColumn Width="100" Header="Дії">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
@@ -307,10 +386,11 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <DataGrid x:Name="GridDepartments" Visibility="Collapsed" CanUserSortColumns="True">
+
+                            <DataGrid x:Name="GridDepartments" Visibility="Collapsed" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Назва" Binding="{Binding DepartmentName}" Width="*"/>
-                                    <DataGridTemplateColumn Width="100">
+                                    <DataGridTextColumn Header="Назва кафедри" Binding="{Binding DepartmentName}" Width="*"/>
+                                    <DataGridTemplateColumn Width="100" Header="Дії">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
@@ -326,10 +406,11 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <DataGrid x:Name="GridSimple" Visibility="Collapsed" CanUserSortColumns="True">
+
+                            <DataGrid x:Name="GridSimple" Visibility="Collapsed" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="*"/>
-                                    <DataGridTemplateColumn Width="100">
+                                    <DataGridTemplateColumn Width="100" Header="Дії">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
@@ -358,30 +439,41 @@
                     </Grid.ColumnDefinitions>
 
                     <Border BorderBrush="#EEE" BorderThickness="0,0,1,0" Padding="0,0,20,0">
-                        <ScrollViewer>
-                            <StackPanel>
-                                <TextBlock Text="Створити тему" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
-                                <TextBlock Text="Назва теми" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="TxtTopicTitle" Margin="0,0,0,10"/>
-                                <TextBlock Text="Опис" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="TxtTopicDesc" Height="80" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                                <TextBlock Text="База практики" Style="{StaticResource LabelStyle}"/>
-                                <ComboBox x:Name="CmbOrganizations" DisplayMemberPath="Name" SelectedValuePath="OrganizationId" Margin="0,0,0,15"/>
-                                <Button Content="Опублікувати тему" Click="BtnAddTopic_Click"/>
-                                <Separator Margin="0,25"/>
-                                <TextBlock Text="Додати організацію" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        <StackPanel>
+                            <TextBlock Text="Створити тему" FontSize="18" FontWeight="Bold" Margin="0,0,0,15" Foreground="{StaticResource PrimaryColor}"/>
+                            <TextBlock Text="Назва теми" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtTopicTitle" Margin="0,0,0,10"/>
+                            <TextBlock Text="Опис" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtTopicDesc" Height="80" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                            <TextBlock Text="Дисципліна" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbTopicDiscipline" DisplayMemberPath="DisciplineName" SelectedValuePath="DisciplineId" Margin="0,0,0,10"/>
+                            <TextBlock Text="База практики" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbOrganizations" DisplayMemberPath="Name" SelectedValuePath="OrganizationId" Margin="0,0,0,15"/>
+                            <Button Content="Опублікувати тему" Click="BtnAddTopic_Click" Background="#2196F3" Foreground="White" Padding="10" BorderThickness="0"/>
+                            <Separator Margin="0,25"/>
+
+                            <TextBlock Text="Додати організацію" FontSize="18" FontWeight="Bold" Margin="0,0,0,15" Foreground="{StaticResource PrimaryColor}"/>
+                            <TextBlock Text="Тип" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbOrgType" Margin="0,0,0,15" SelectionChanged="CmbOrgType_SelectionChanged">
+                                <ComboBoxItem Content="Зовнішня"/>
+                                <ComboBoxItem Content="Кафедра"/>
+                            </ComboBox>
+
+                            <StackPanel x:Name="PanelOrgNameInput">
                                 <TextBlock Text="Назва" Style="{StaticResource LabelStyle}"/>
                                 <TextBox x:Name="TxtOrgName" Margin="0,0,0,10"/>
-                                <TextBlock Text="Адреса" Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="TxtOrgAddr" Margin="0,0,0,10"/>
-                                <TextBlock Text="Тип" Style="{StaticResource LabelStyle}"/>
-                                <ComboBox x:Name="CmbOrgType" Margin="0,0,0,15">
-                                    <ComboBoxItem Content="Зовнішня"/>
-                                    <ComboBoxItem Content="Кафедра"/>
-                                </ComboBox>
-                                <Button Content="Додати організацію" Click="BtnAddOrg_Click" Background="#607D8B"/>
                             </StackPanel>
-                        </ScrollViewer>
+
+                            <StackPanel x:Name="PanelOrgDeptSelect" Visibility="Collapsed">
+                                <TextBlock Text="Оберіть кафедру:" Style="{StaticResource LabelStyle}"/>
+                                <ComboBox x:Name="CmbOrgDeptSource" DisplayMemberPath="DepartmentName" SelectedValuePath="DepartmentName" Margin="0,0,0,10"/>
+                            </StackPanel>
+
+                            <TextBlock Text="Адреса" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtOrgAddr" Margin="0,0,0,10"/>
+
+                            <Button Content="Додати організацію" Click="BtnAddOrg_Click" Background="#607D8B" Foreground="White" Padding="10" BorderThickness="0"/>
+                        </StackPanel>
                     </Border>
 
                     <Grid Grid.Column="1" Margin="20,0,0,0">
@@ -396,17 +488,32 @@
                                     <TextBlock Text="Список тем" FontWeight="Bold" VerticalAlignment="Center"/>
                                     <TextBlock Text="  |  Фільтр по базі:" VerticalAlignment="Center" Margin="10,0,5,0" Foreground="Gray"/>
                                     <ComboBox x:Name="CmbFilterTopicOrg" Width="150" DisplayMemberPath="Name" SelectedValuePath="OrganizationId" SelectionChanged="CmbFilterTopicOrg_SelectionChanged" Height="25" Padding="5,0"/>
-                                    <Button Content="X" Width="25" Height="25" Margin="5,0,0,0" Background="#90A4AE" Padding="0" Click="BtnResetTopicFilter_Click" ToolTip="Очистити фільтр"/>
+                                    <Button Content="Очистити" Click="BtnResetTopicFilter_Click" Background="#90A4AE" Foreground="White" Margin="10,0,0,0" Padding="10,5" BorderThickness="0"/>
                                 </StackPanel>
                             </GroupBox.Header>
-                            <DataGrid x:Name="GridTopics" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False">
+                            <DataGrid x:Name="GridTopics" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Назва" Binding="{Binding Title}" Width="*"/>
+                                    <DataGridTextColumn Header="Предмет" Binding="{Binding Discipline.DisciplineName}" Width="150"/>
                                     <DataGridTextColumn Header="Організація" Binding="{Binding Organization.Name}" Width="200"/>
                                     <DataGridTemplateColumn Header="Вільна" Width="60">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <CheckBox IsChecked="{Binding IsAvailable, Mode=OneWay}" Click="ChkTopicAvailable_Click" HorizontalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Width="80" Header="Дії">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Style="{StaticResource IconButton}" Background="#FF9800" Click="BtnEditTopic_Click" Tag="{Binding TopicId}" Margin="0,0,5,0">
+                                                        <Path Data="{StaticResource IconPencil}" Fill="White" Stretch="Uniform" Margin="2"/>
+                                                    </Button>
+                                                    <Button Style="{StaticResource IconButton}" Background="#F44336" Click="BtnDeleteTopic_Click" Tag="{Binding TopicId}">
+                                                        <Path Data="{StaticResource IconClose}" Fill="White" Stretch="Uniform" Margin="2"/>
+                                                    </Button>
+                                                </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -420,21 +527,103 @@
                                     <TextBlock Text="Список організацій" FontWeight="Bold" VerticalAlignment="Center"/>
                                     <TextBlock Text="  |  Фільтр по типу:" VerticalAlignment="Center" Margin="10,0,5,0" Foreground="Gray"/>
                                     <ComboBox x:Name="CmbFilterOrgType" Width="150" SelectionChanged="CmbFilterOrgType_SelectionChanged" Height="25" Padding="5,0">
-                                        <ComboBoxItem Content="Всі"/>
                                         <ComboBoxItem Content="Зовнішня"/>
                                         <ComboBoxItem Content="Кафедра"/>
                                     </ComboBox>
-                                    <Button Content="X" Width="25" Height="25" Margin="5,0,0,0" Background="#90A4AE" Padding="0" Click="BtnResetOrgFilter_Click" ToolTip="Очистити фільтр"/>
+                                    <Button Content="Очистити" Click="BtnResetOrgFilter_Click" Background="#90A4AE" Foreground="White" Margin="10,0,0,0" Padding="10,5" BorderThickness="0"/>
                                 </StackPanel>
                             </GroupBox.Header>
-                            <DataGrid x:Name="GridOrgs" IsReadOnly="True" CanUserSortColumns="True">
+                            <DataGrid x:Name="GridOrgs" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="*"/>
                                     <DataGridTextColumn Header="Адреса" Binding="{Binding Address}" Width="*"/>
                                     <DataGridTextColumn Header="Тип" Binding="{Binding Type}" Width="100"/>
+                                    <DataGridTemplateColumn Width="80" Header="Дії">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Style="{StaticResource IconButton}" Background="#FF9800" Click="BtnEditOrg_Click" Tag="{Binding OrganizationId}" Margin="0,0,5,0">
+                                                        <Path Data="{StaticResource IconPencil}" Fill="White" Stretch="Uniform" Margin="2"/>
+                                                    </Button>
+                                                    <Button Style="{StaticResource IconButton}" Background="#F44336" Click="BtnDeleteOrg_Click" Tag="{Binding OrganizationId}">
+                                                        <Path Data="{StaticResource IconClose}" Fill="White" Stretch="Uniform" Margin="2"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </GroupBox>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Курси">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border BorderBrush="#EEE" BorderThickness="0,0,1,0" Padding="0,0,20,0">
+                        <StackPanel>
+                            <TextBlock Text="1. Створити курс" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" Foreground="{StaticResource PrimaryColor}"/>
+                            <TextBlock Text="Назва (напр. Виробнича 2026)" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtCourseName" Margin="0,0,0,10"/>
+                            <TextBlock Text="Рік" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtCourseYear" Margin="0,0,0,10"/>
+                            <TextBlock Text="Дисципліна" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbCourseDiscipline" DisplayMemberPath="DisciplineName" SelectedValuePath="DisciplineId" Margin="0,0,0,10"/>
+                            <TextBlock Text="Керівник курсу (Викладач):" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbCourseSupervisor" DisplayMemberPath="User.LastName" SelectedValuePath="SupervisorId" Margin="0,0,0,20"/>
+                            <Button Content="Створити курс" Click="BtnAddCourse_Click" Background="#2196F3" Foreground="White" Padding="10" BorderThickness="0" Margin="0,0,0,25"/>
+
+                            <Separator Margin="0,0,0,25"/>
+                            <TextBlock Text="2. Зарахувати групу" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" Foreground="#2E7D32"/>
+                            <TextBlock Text="Оберіть курс:" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbEnrollCourse" DisplayMemberPath="Name" SelectedValuePath="CourseId" Margin="0,0,0,10"/>
+                            <TextBlock Text="Оберіть групу:" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox x:Name="CmbEnrollGroup" DisplayMemberPath="GroupCode" SelectedValuePath="GroupId" Margin="0,0,0,15"/>
+                            <Button Content="Зарахувати студентів" Click="BtnEnrollGroup_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
+                        </StackPanel>
+                    </Border>
+                    <Grid Grid.Column="1" Margin="20,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                            <TextBlock Text="Сортування:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ComboBox x:Name="CmbCourseSort" Width="150" SelectionChanged="CmbCourseSort_SelectionChanged" Height="25" Padding="5,0">
+                                <ComboBoxItem Content="За назвою"/>
+                                <ComboBoxItem Content="За дисципліною"/>
+                            </ComboBox>
+                            <TextBlock Text="  |  Фільтр по групі:" VerticalAlignment="Center" Margin="15,0,10,0" Foreground="Gray"/>
+                            <ComboBox x:Name="CmbCourseFilterGroup" Width="120" DisplayMemberPath="GroupCode" SelectedValuePath="GroupId" SelectionChanged="CmbCourseFilterGroup_SelectionChanged" Height="25" Padding="5,0"/>
+                            <Button Content="Очистити" Click="BtnResetCourseFilter_Click" Background="#90A4AE" Foreground="White" Margin="10,0,0,0" Padding="10,5" BorderThickness="0"/>
+                        </StackPanel>
+                        <DataGrid Grid.Row="1" x:Name="GridCourses" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Назва курсу" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="Рік" Binding="{Binding Year}" Width="60"/>
+                                <DataGridTextColumn Header="Дисципліна" Binding="{Binding Discipline.DisciplineName}" Width="150"/>
+                                <DataGridTextColumn Header="Керівник" Binding="{Binding Supervisor.User.LastName}" Width="150"/>
+                                <DataGridTemplateColumn Width="80" Header="Дії">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource IconButton}" Background="#FF9800" Click="BtnEditCourse_Click" Tag="{Binding CourseId}">
+                                                    <Path Data="{StaticResource IconPencil}" Fill="White" Stretch="Uniform" Margin="2"/>
+                                                </Button>
+                                                <Button Style="{StaticResource IconButton}" Background="#F44336" Click="BtnDeleteCourse_Click" Tag="{Binding CourseId}">
+                                                    <Path Data="{StaticResource IconClose}" Fill="White" Stretch="Uniform" Margin="2"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </Grid>
                 </Grid>
             </TabItem>
@@ -445,14 +634,25 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Button Content="Оновити журнал" HorizontalAlignment="Left" Click="BtnRefreshLogs_Click" Margin="0,0,0,10" Background="#90A4AE"/>
-                    <DataGrid Grid.Row="1" x:Name="GridLogs" IsReadOnly="True" CanUserSortColumns="True">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Фільтр подій:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
+                        <ComboBox x:Name="CmbLogFilter" Width="200" SelectionChanged="CmbLogFilter_SelectionChanged">
+                            <ComboBoxItem Content="Всі події" Tag="All" IsSelected="True"/>
+                            <ComboBoxItem Content="Вхід у систему" Tag="Auth"/>
+                            <ComboBoxItem Content="Створення даних" Tag="Create"/>
+                            <ComboBoxItem Content="Редагування" Tag="Update"/>
+                            <ComboBoxItem Content="Видалення" Tag="Delete"/>
+                            <ComboBoxItem Content="Інше" Tag="Other"/>
+                        </ComboBox>
+                        <Button Content="🔄 Оновити" Click="BtnRefreshLogs_Click" Margin="10,0,0,0" Padding="15,5" Background="#607D8B" Foreground="White" BorderThickness="0"/>
+                    </StackPanel>
+                    <DataGrid Grid.Row="1" x:Name="GridLogs" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Дата" Binding="{Binding TimeStamp, StringFormat=\{0:dd.MM.yyyy HH:mm\}}" Width="150"/>
-                            <DataGridTextColumn Header="User ID" Binding="{Binding UserId}" Width="80"/>
-                            <DataGridTextColumn Header="Дія" Binding="{Binding Action}" Width="150"/>
-                            <DataGridTextColumn Header="Деталі" Binding="{Binding Details}" Width="*"/>
-                            <DataGridTextColumn Header="Сутність" Binding="{Binding EntityAffected}" Width="150"/>
+                            <DataGridTextColumn Header="Дата та Час" Binding="{Binding TimeStamp, StringFormat=\{0:dd.MM.yyyy HH:mm:ss\}}" Width="160"/>
+                            <DataGridTextColumn Header="User ID" Binding="{Binding UserId}" Width="60"/>
+                            <DataGridTextColumn Header="Тип дії" Binding="{Binding Action}" Width="120" FontWeight="Bold"/>
+                            <DataGridTextColumn Header="Сутність" Binding="{Binding EntityAffected}" Width="120"/>
+                            <DataGridTextColumn Header="Деталі події" Binding="{Binding Details}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -475,7 +675,7 @@
                     <TextBox x:Name="EditStudRecord" Margin="0,0,0,20"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Скасувати" Background="Transparent" Foreground="Gray" Click="BtnCloseModal_Click" Margin="0,0,10,0"/>
-                        <Button Content="Зберегти" Click="BtnSaveEditStudent_Click"/>
+                        <Button Content="Зберегти" Click="BtnSaveEditStudent_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -499,7 +699,7 @@
                     <TextBox x:Name="EditSupPhone" Margin="0,0,0,20"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Скасувати" Background="Transparent" Foreground="Gray" Click="BtnCloseModal_Click" Margin="0,0,10,0"/>
-                        <Button Content="Зберегти" Click="BtnSaveEditSupervisor_Click"/>
+                        <Button Content="Зберегти" Click="BtnSaveEditSupervisor_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -508,22 +708,95 @@
         <Grid x:Name="ModalEditStruct" Visibility="Collapsed" Background="#7F000000" Grid.RowSpan="2" Panel.ZIndex="100">
             <Border Background="White" Width="350" CornerRadius="8" Padding="20" VerticalAlignment="Center">
                 <StackPanel>
-                    <TextBlock Text="Редагування" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <TextBlock Text="Редагування запису" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                    <StackPanel x:Name="PanelEditStructCode">
+                        <TextBlock x:Name="LblStructCode" Text="Код:" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="EditStructCode" Margin="0,0,0,15"/>
+                    </StackPanel>
+
                     <StackPanel x:Name="PanelEditStructName">
                         <TextBlock x:Name="LblStructName" Text="Назва:" Style="{StaticResource LabelStyle}"/>
                         <TextBox x:Name="EditStructName" Margin="0,0,0,15"/>
                     </StackPanel>
-                    <StackPanel x:Name="PanelEditStructCode" Visibility="Collapsed">
-                        <TextBlock x:Name="LblStructCode" Text="Код / Шифр:" Style="{StaticResource LabelStyle}"/>
-                        <TextBox x:Name="EditStructCode" Margin="0,0,0,15"/>
-                    </StackPanel>
+
                     <StackPanel x:Name="PanelEditStructYear" Visibility="Collapsed">
                         <TextBlock Text="Рік вступу:" Style="{StaticResource LabelStyle}"/>
                         <TextBox x:Name="EditStructYear" Margin="0,0,0,15"/>
                     </StackPanel>
+
+                    <StackPanel x:Name="PanelEditStructDept" Visibility="Collapsed">
+                        <TextBlock Text="Кафедра:" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox x:Name="EditStructDept" DisplayMemberPath="DepartmentName" SelectedValuePath="DepartmentId" Margin="0,0,0,15" SelectionChanged="EditStructDept_SelectionChanged"/>
+                    </StackPanel>
+
+                    <StackPanel x:Name="PanelEditStructSpec" Visibility="Collapsed">
+                        <TextBlock Text="Спеціальність:" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox x:Name="EditStructSpec" DisplayMemberPath="Name" SelectedValuePath="SpecialtyId" Margin="0,0,0,15"/>
+                    </StackPanel>
+
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Скасувати" Background="Transparent" Foreground="Gray" Click="BtnCloseModal_Click" Margin="0,0,10,0"/>
-                        <Button Content="Зберегти" Click="BtnSaveEditStruct_Click"/>
+                        <Button Content="Зберегти" Click="BtnSaveEditStruct_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="ModalEditTopic" Visibility="Collapsed" Background="#7F000000" Grid.RowSpan="2" Panel.ZIndex="100">
+            <Border Background="White" Width="400" CornerRadius="8" Padding="20" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Редагування теми" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <TextBlock Text="Назва:" Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="EditTopicTitle" Margin="0,0,0,10"/>
+                    <TextBlock Text="Опис:" Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="EditTopicDesc" Height="60" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                    <TextBlock Text="База практики:" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox x:Name="EditTopicOrg" DisplayMemberPath="Name" SelectedValuePath="OrganizationId" Margin="0,0,0,20"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Скасувати" Background="Transparent" Foreground="Gray" Click="BtnCloseModal_Click" Margin="0,0,10,0"/>
+                        <Button Content="Зберегти" Click="BtnSaveEditTopic_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="ModalEditOrg" Visibility="Collapsed" Background="#7F000000" Grid.RowSpan="2" Panel.ZIndex="100">
+            <Border Background="White" Width="400" CornerRadius="8" Padding="20" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Редагування організації" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <TextBlock Text="Назва:" Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="EditOrgName" Margin="0,0,0,10"/>
+                    <TextBlock Text="Адреса:" Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="EditOrgAddr" Margin="0,0,0,10"/>
+                    <TextBlock Text="Тип:" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox x:Name="EditOrgType" Margin="0,0,0,20">
+                        <ComboBoxItem Content="Зовнішня"/>
+                        <ComboBoxItem Content="Кафедра"/>
+                    </ComboBox>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Скасувати" Background="Transparent" Foreground="Gray" Click="BtnCloseModal_Click" Margin="0,0,10,0"/>
+                        <Button Content="Зберегти" Click="BtnSaveEditOrg_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="ModalEditCourse" Visibility="Collapsed" Background="#7F000000" Grid.RowSpan="2" Panel.ZIndex="100">
+            <Border Background="White" Width="350" CornerRadius="8" Padding="20" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Редагування курсу" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <TextBlock Text="Назва:" Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="EditCourseName" Margin="0,0,0,10"/>
+                    <TextBlock Text="Рік:" Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="EditCourseYear" Margin="0,0,0,10"/>
+                    <TextBlock Text="Дисципліна:" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox x:Name="EditCourseDiscipline" DisplayMemberPath="DisciplineName" SelectedValuePath="DisciplineId" Margin="0,0,0,10"/>
+                    <TextBlock Text="Керівник:" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox x:Name="EditCourseSupervisor" DisplayMemberPath="User.LastName" SelectedValuePath="SupervisorId" Margin="0,0,0,20"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Скасувати" Background="Transparent" Foreground="Gray" Click="BtnCloseModal_Click" Margin="0,0,10,0"/>
+                        <Button Content="Зберегти" Click="BtnSaveEditCourse_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
