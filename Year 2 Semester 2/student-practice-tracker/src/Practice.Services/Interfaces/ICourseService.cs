@@ -14,6 +14,7 @@ namespace Practice.Services.Interfaces
 
         Task<bool> EnrollStudentToCourseAsync(int studentId, int courseId, int? groupId); 
         Task<IEnumerable<Discipline>> GetAllDisciplinesAsync();
-        Task AddDisciplineAsync(string name); 
+        Task AddDisciplineAsync(string name);
+        Task UnenrollGroupFromCourseAsync(int courseId, int groupId);
     }
 }

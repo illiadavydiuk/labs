@@ -9,5 +9,9 @@ namespace Practice.Repositories.Interfaces
     {
         Task<Student> GetStudentDetailsAsync(int studentId);
         Task<Student> GetByUserIdAsync(int userId);
+        Task<IEnumerable<Student>> GetStudentsByGroupAsync(int? groupId);
+        Task<Student?> GetStudentProfileAsync(int userId);
+        Task<List<Course>> GetEnrolledCoursesForStudentAsync(int studentId, int groupId);
     }
 }
+

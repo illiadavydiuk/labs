@@ -6,7 +6,7 @@ namespace Practice.Services.Interfaces
 {
     public interface IAuditService
     {
-        Task LogActionAsync(int? userId, string action, string details, string entityName, int entityId);
+        Task LogActionAsync(int? userId, string action, string details, string entityName = null, int? entityId = null);
 
         Task<List<AuditLog>> GetAllLogsAsync();
     }

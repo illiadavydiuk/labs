@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -21,7 +22,7 @@ namespace Practice.Windows
         private InternshipAssignment _currentAssignment;
 
         private ObservableCollection<Attachment> _tempAttachments = new ObservableCollection<Attachment>();
-        private List<InternshipTopic> _allCachedTopics = new List<InternshipTopic>(); // Кеш тем
+        private List<InternshipTopic> _allCachedTopics = new List<InternshipTopic>();
 
         public StudentWindow(User user, IStudentService studentService)
         {
@@ -38,7 +39,12 @@ namespace Practice.Windows
             try
             {
                 _currentStudent = await _studentService.GetStudentProfileAsync(_currentUser.UserId);
-                if (_currentStudent == null) { MessageBox.Show("Помилка профілю."); Close(); return; }
+                if (_currentStudent == null)
+                {
+                    MessageBox.Show("Помилка: Профіль студента не знайдено.");
+                    Close();
+                    return;
+                }
 
                 TxtStudentName.Text = $"{_currentStudent.User.LastName} {_currentStudent.User.FirstName} ({_currentStudent.StudentGroup.GroupCode})";
                 LoadCourses();
@@ -57,36 +63,18 @@ namespace Practice.Windows
         {
             _currentAssignment = null;
             _selectedCourse = CmbCurrentCourse.SelectedItem as Course;
-
-            CmbFilterOrg.ItemsSource = null;
-            TxtFeedback.Text = "Завантаження...";
-
             RefreshAllData();
         }
 
         private async void RefreshAllData()
         {
             if (_selectedCourse == null) return;
-
             try
             {
                 _currentAssignment = await _studentService.GetAssignmentAsync(_currentStudent.StudentId, _selectedCourse.CourseId);
                 UpdateUIState();
-                LoadHistory();
             }
             catch (Exception ex) { MessageBox.Show("Помилка оновлення даних: " + ex.Message); }
-        }
-
-        private async void LoadHistory()
-        {
-            if (_currentAssignment != null)
-            {
-                ListHistory.ItemsSource = await _studentService.GetAssignmentHistoryAsync(_currentAssignment.AssignmentId);
-            }
-            else
-            {
-                ListHistory.ItemsSource = null;
-            }
         }
 
         private void UpdateUIState()
@@ -96,9 +84,9 @@ namespace Practice.Windows
             TxtReportLink.Clear();
             TxtFeedback.Text = "Відгук відсутній";
 
-            var gray = (Brush)new BrushConverter().ConvertFrom("#DDD");
+            var gray = (Brush)new BrushConverter().ConvertFrom("#9E9E9E");
             var green = (Brush)new BrushConverter().ConvertFrom("#4CAF50");
-            var blue = (Brush)new BrushConverter().ConvertFrom("#2196F3");
+            var orange = (Brush)new BrushConverter().ConvertFrom("#FF9800");
             var red = (Brush)new BrushConverter().ConvertFrom("#F44336");
 
             if (_currentAssignment == null)
@@ -109,8 +97,6 @@ namespace Practice.Windows
                 GridTopics.Visibility = Visibility.Visible;
                 PanelFilters.Visibility = Visibility.Visible;
                 PanelTopicAlreadySelected.Visibility = Visibility.Collapsed;
-
-                Step1Circle.Fill = gray; Step2Circle.Fill = gray;
 
                 LoadTopicsForCourse();
             }
@@ -123,50 +109,100 @@ namespace Practice.Windows
                 PanelFilters.Visibility = Visibility.Collapsed;
                 PanelTopicAlreadySelected.Visibility = Visibility.Visible;
 
-                Step1Circle.Fill = green;
-
-                // Керівник
+                TxtCurrentTopicTitle.Text = _currentAssignment.InternshipTopic?.Title ?? "Тема не вказана";
                 TxtInfoSupervisor.Text = _currentAssignment.Supervisor != null
                     ? $"{_currentAssignment.Supervisor.User.LastName} {_currentAssignment.Supervisor.User.FirstName}"
                     : "Призначається...";
 
-                // Статус звіту
-                var report = _currentAssignment.Reports?.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+                var lastReport = _currentAssignment.Reports?.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
 
-                if (report == null)
+                if (lastReport == null)
                 {
-                    Step2Circle.Fill = gray;
-                    TxtInfoStatus.Text = "Подайте звіт";
-                    BtnSubmitReport.Visibility = Visibility.Visible;
+                    TxtInfoStatus.Text = "Очікується звіт";
+                    StatusBadge.Background = gray;
+                    SetEditMode(true);
                 }
                 else
                 {
-                    TxtReportComment.Text = report.StudentComment;
-                    TxtFeedback.Text = report.SupervisorFeedback ?? "На перевірці...";
+                    TxtReportComment.Text = lastReport.StudentComment;
+                    TxtFeedback.Text = lastReport.SupervisorFeedback ?? "Звіт надіслано. Очікуйте на перевірку викладачем.";
 
-                    if (report.Attachments != null)
-                        foreach (var a in report.Attachments)
-                            if (a.FileType != "URL") _tempAttachments.Add(a);
-                            else TxtReportLink.Text = a.FilePath;
+                    var link = lastReport.Attachments?.FirstOrDefault(a => a.FileType == "URL");
+                    if (link != null) TxtReportLink.Text = link.FilePath;
 
-                    if (report.StatusId == 1) { Step2Circle.Fill = blue; BtnSubmitReport.Visibility = Visibility.Collapsed; }
-                    else if (report.StatusId == 2) { Step2Circle.Fill = red; BtnSubmitReport.Visibility = Visibility.Visible; }
-                    else if (report.StatusId == 3) { Step2Circle.Fill = green; BtnSubmitReport.Visibility = Visibility.Collapsed; }
+                    if (lastReport.StatusId == 2) // Повернуто (Червоний)
+                    {
+                        TxtInfoStatus.Text = "⚠️ ПОВЕРНУТО";
+                        StatusBadge.Background = red;
+                        SetEditMode(true); // Дозволяємо редагувати для виправлення
+                    }
+                    else if (lastReport.StatusId == 1) // На перевірці (Помаранчевий)
+                    {
+                        TxtInfoStatus.Text = "⏳ НА ПЕРЕВІРЦІ";
+                        StatusBadge.Background = orange;
+                        SetEditMode(false); // Блокуємо, поки не перевірять
+                    }
+                    else if (lastReport.StatusId == 3) // Прийнято (Зелений)
+                    {
+                        TxtInfoStatus.Text = "✅ ПРИЙНЯТО";
+                        StatusBadge.Background = green;
+                        SetEditMode(false);
+                    }
                 }
 
                 TxtFinalGrade.Text = _currentAssignment.FinalGrade?.ToString() ?? "-";
+                TxtCompanyGrade.Text = _currentAssignment.CompanyGrade?.ToString() ?? "Не виставлено";
+                TxtCompanyFeedback.Text = _currentAssignment.CompanyFeedback ?? "Відгук від організації відсутній";
+                TxtFinalStatusText.Text = _currentAssignment.FinalGrade.HasValue ? "ПРАКТИКУ ЗАВЕРШЕНО" : "В ПРОЦЕСІ";
+
+                LoadFormattedHistory();
             }
+        }
+
+        private void SetEditMode(bool canEdit)
+        {
+            TxtReportComment.IsReadOnly = !canEdit;
+            TxtReportLink.IsReadOnly = !canEdit;
+            BtnSubmitReport.IsEnabled = canEdit;
+            BtnSubmitReport.Opacity = canEdit ? 1.0 : 0.6;
+        }
+
+        private void LoadFormattedHistory()
+        {
+            if (_currentAssignment?.Reports == null) return;
+
+            var historyItems = new List<dynamic>();
+            foreach (var r in _currentAssignment.Reports)
+            {
+                historyItems.Add(new
+                {
+                    TimeStamp = r.SubmissionDate,
+                    Action = "📤 Ви надіслали звіт",
+                    Details = string.IsNullOrWhiteSpace(r.StudentComment) ? "Без коментаря" : r.StudentComment
+                });
+
+                if (r.ReviewDate.HasValue)
+                {
+                    string status = r.StatusId == 2 ? "⚠️ ВИКЛАДАЧ ПОВЕРНУВ РОБОТУ" : "✅ ВИКЛАДАЧ ПРИЙНЯВ ЗВІТ";
+                    historyItems.Add(new
+                    {
+                        TimeStamp = r.ReviewDate.Value,
+                        Action = status,
+                        Details = r.SupervisorFeedback ?? "Коментар відсутній"
+                    });
+                }
+            }
+
+            ListHistory.ItemsSource = historyItems.OrderByDescending(x => x.TimeStamp).ToList();
         }
 
         private async void LoadTopicsForCourse()
         {
-            if (_selectedCourse == null || _selectedCourse.DisciplineId == 0) return;
-
+            if (_selectedCourse == null) return;
             _allCachedTopics = await _studentService.GetAvailableTopicsAsync(_selectedCourse.DisciplineId, null);
 
             var orgs = _allCachedTopics.Select(t => t.Organization).Where(o => o != null)
-                        .GroupBy(o => o.OrganizationId).Select(g => g.First()).ToList();
-
+                                       .DistinctBy(o => o.OrganizationId).ToList();
             CmbFilterOrg.ItemsSource = orgs;
             ApplyFilters();
         }
@@ -174,33 +210,29 @@ namespace Practice.Windows
         private void ApplyFilters()
         {
             var filtered = _allCachedTopics.AsEnumerable();
-            if (CmbFilterOrg.SelectedValue is int orgId) filtered = filtered.Where(t => t.OrganizationId == orgId);
+            if (CmbFilterOrg.SelectedValue is int orgId)
+                filtered = filtered.Where(t => t.OrganizationId == orgId);
+
             GridTopics.ItemsSource = filtered.ToList();
         }
 
         private void CmbFilterOrg_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyFilters();
         private void BtnResetFilter_Click(object sender, RoutedEventArgs e) { CmbFilterOrg.SelectedIndex = -1; ApplyFilters(); }
 
-
         private async void BtnSelectTopic_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int topicId)
             {
-                if (MessageBox.Show("Обрати цю тему?", "Підтвердження", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                var res = MessageBox.Show("Ви впевнені, що хочете обрати цю тему?", "Підтвердження", MessageBoxButton.YesNo);
+                if (res == MessageBoxResult.Yes)
                 {
                     try
                     {
-                        // ВИКЛИКАЄМО СЕРВІС (не ліземо в базу напряму!)
                         await _studentService.SelectTopicAsync(_currentStudent.StudentId, topicId, _selectedCourse.CourseId);
-
                         RefreshAllData();
-                        MainTabControl.SelectedIndex = 1;
-                        MessageBox.Show("Тему успішно закріплено!");
+                        MessageBox.Show("Тему успішно обрано!");
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Помилка: " + ex.Message);
-                    }
+                    catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
                 }
             }
         }
@@ -213,14 +245,20 @@ namespace Practice.Windows
             if (dlg.ShowDialog() == true)
             {
                 foreach (string f in dlg.FileNames)
-                    _tempAttachments.Add(new Attachment { FileName = System.IO.Path.GetFileName(f), FilePath = f, FileType = "FILE" });
+                {
+                    _tempAttachments.Add(new Attachment
+                    {
+                        FileName = System.IO.Path.GetFileName(f),
+                        FilePath = f,
+                        FileType = "FILE"
+                    });
+                }
             }
         }
 
         private async void BtnSubmitReport_Click(object sender, RoutedEventArgs e)
         {
             if (_currentAssignment == null) return;
-
             try
             {
                 await _studentService.SubmitReportAsync(
@@ -230,15 +268,17 @@ namespace Practice.Windows
                     _tempAttachments.ToList()
                 );
 
-                MessageBox.Show("Звіт відправлено!");
+                MessageBox.Show("Звіт успішно відправлено на перевірку!");
+                _tempAttachments.Clear();
                 RefreshAllData();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Помилка відправки: " + ex.Message);
-            }
+            catch (Exception ex) { MessageBox.Show("Помилка відправки: " + ex.Message); }
         }
 
-        private void BtnLogout_Click(object sender, RoutedEventArgs e) { new LoginWindow().Show(); Close(); }
+        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            new LoginWindow().Show();
+            this.Close();
+        }
     }
 }

@@ -16,9 +16,10 @@ namespace Practice.Services.Interfaces
         Task<InternshipAssignment?> GetStudentAssignmentAsync(int studentId);
 
         Task<IEnumerable<Organization>> GetAllOrganizationsAsync();
-        Task<Organization> CreateOrganizationAsync(string name, string address, string type);
-        Task DeleteOrganizationAsync(int id); 
 
-        void CreateBackup(string path);
+        Task<Organization> CreateOrganizationAsync(string name, string address, string type, string email);
+
+        Task DeleteOrganizationAsync(int id);
+
     }
 }

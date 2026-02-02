@@ -10,5 +10,11 @@ namespace Practice.Repositories.Interfaces
         Task<InternshipAssignment> GetFullAssignmentDetailsAsync(int assignmentId);
         Task<IEnumerable<InternshipAssignment>> GetAssignmentsByCourseAsync(int courseId);
         Task<InternshipAssignment?> GetActiveAssignmentAsync(int studentId);
+
+        Task<IEnumerable<InternshipAssignment>> GetBySupervisorWithDetailsAsync(int supervisorId);
+        Task<InternshipAssignment?> GetByStudentAndCourseWithDetailsAsync(int studentId, int courseId);
+        Task<InternshipAssignment?> GetByStudentAndCourseAsync(int studentId, int courseId);
+        Task AddAssignmentWithTopicUpdateAsync(InternshipAssignment assignment, int topicId);
+        Task UpdateAssignmentTopicAsync(InternshipAssignment assignment, int newTopicId);
     }
 }

@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Practice.Data.Context;
-using Practice.Data.Entities;
+﻿using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using Practice.Services.Interfaces;
 using System;
@@ -13,111 +11,115 @@ namespace Practice.Services.Implementations
     public class CourseService : ICourseService
     {
         private readonly ICourseRepository _courseRepo;
-        private readonly IDisciplineRepository _disciplineRepo;
-        private readonly ICourseEnrollmentRepository _enrollmentRepo;
+        private readonly IDisciplineRepository _discRepo;
+        private readonly ICourseEnrollmentRepository _enrollRepo;
         private readonly IAuditService _auditService;
 
         public CourseService(
             ICourseRepository courseRepo,
-            IDisciplineRepository disciplineRepo,
-            ICourseEnrollmentRepository enrollmentRepo,
+            IDisciplineRepository discRepo,
+            ICourseEnrollmentRepository enrollRepo,
             IAuditService auditService)
         {
             _courseRepo = courseRepo;
-            _disciplineRepo = disciplineRepo;
-            _enrollmentRepo = enrollmentRepo;
+            _discRepo = discRepo;
+            _enrollRepo = enrollRepo;
             _auditService = auditService;
         }
 
         public async Task<IEnumerable<Course>> GetAllActiveCoursesAsync()
         {
-            return await _courseRepo.GetAllActiveAsync();
+            return await _courseRepo.GetActiveCoursesAsync();
+        }
+
+        public async Task<IEnumerable<Discipline>> GetAllDisciplinesAsync()
+        {
+            return await _discRepo.GetAllAsync();
         }
 
         public async Task<Course> CreateCourseAsync(Course course)
         {
             if (string.IsNullOrWhiteSpace(course.Name)) throw new ArgumentException("Назва курсу обов'язкова");
+
             _courseRepo.Add(course);
             await _courseRepo.SaveAsync();
+
             await _auditService.LogActionAsync(null, "Create", $"Створено курс: {course.Name}", "Course", course.CourseId);
             return course;
         }
 
-        public async Task<Course?> GetCourseByIdAsync(int id)
-        {
-            return await _courseRepo.GetByIdAsync(id);
-        }
-
         public async Task UpdateCourseAsync(Course course)
         {
-            using (var context = new AppDbContext())
+            var existing = await _courseRepo.GetByIdAsync(course.CourseId);
+            if (existing != null)
             {
-                var existingCourse = await context.Courses.FindAsync(course.CourseId);
+                existing.Name = course.Name;
+                existing.Year = course.Year;
+                existing.DisciplineId = course.DisciplineId;
+                existing.SupervisorId = course.SupervisorId;
+                existing.IsActive = course.IsActive;
 
-                if (existingCourse != null)
-                {
-                    existingCourse.Name = course.Name;
-                    existingCourse.Year = course.Year;
-
-                    existingCourse.DisciplineId = course.DisciplineId;
-                    existingCourse.SupervisorId = course.SupervisorId;
-
-                    context.Entry(existingCourse).State = EntityState.Modified;
-
-                    await context.SaveChangesAsync();
-
-                    if (_auditService != null)
-                    {
-                        await _auditService.LogActionAsync(null, "Update", $"Оновлено курс ID {course.CourseId}: {course.Name}", "Course", course.CourseId);
-                    }
-                }
-                else
-                {
-                    throw new Exception($"Курс з ID {course.CourseId} не знайдено в базі даних.");
-                }
+                _courseRepo.Update(existing);
+                await _courseRepo.SaveAsync();
             }
         }
 
-        public async Task DeleteCourseAsync(int id)
+        public async Task DeleteCourseAsync(int courseId)
         {
-            using var context = new AppDbContext();
-            var item = await context.Courses.FindAsync(id);
-            if (item != null)
+            var course = await _courseRepo.GetByIdAsync(courseId);
+            if (course != null)
             {
-                string name = item.Name;
-                context.Courses.Remove(item);
-                await context.SaveChangesAsync();
-                await _auditService.LogActionAsync(null, "Delete", $"Видалено курс: {name}", "Course", id);
+                course.IsActive = false;
+                _courseRepo.Update(course);
+                await _courseRepo.SaveAsync();
             }
-        }
-
-        public async Task<bool> EnrollStudentToCourseAsync(int studentId, int courseId, int? groupId)
-        {
-            var exists = await _enrollmentRepo.IsEnrolledAsync(studentId, courseId);
-            if (exists) return false;
-
-            var enrollment = new CourseEnrollment
-            {
-                StudentId = studentId,
-                CourseId = courseId
-            };
-            _enrollmentRepo.Add(enrollment);
-            await _enrollmentRepo.SaveAsync();
-            return true;
-        }
-
-        public async Task<IEnumerable<Discipline>> GetAllDisciplinesAsync()
-        {
-            return await _disciplineRepo.GetAllAsync();
         }
 
         public async Task AddDisciplineAsync(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Назва дисципліни обов'язкова");
-            var d = new Discipline { DisciplineName = name };
-            _disciplineRepo.Add(d);
-            await _disciplineRepo.SaveAsync();
-            await _auditService.LogActionAsync(null, "Create", $"Створено дисципліну: {name}", "Discipline", d.DisciplineId);
+            if (string.IsNullOrWhiteSpace(name)) return;
+            var disc = new Discipline { DisciplineName = name };
+            _discRepo.Add(disc);
+            await _discRepo.SaveAsync();
+        }
+
+        public async Task<bool> EnrollStudentToCourseAsync(int studentId, int courseId, int? groupId)
+        {
+            var all = await _enrollRepo.GetAllAsync();
+            bool exists = all.Any(e => e.CourseId == courseId &&
+                                       ((studentId > 0 && e.StudentId == studentId) ||
+                                        (groupId.HasValue && e.GroupId == groupId.Value)));
+
+            if (!exists)
+            {
+                var enroll = new CourseEnrollment
+                {
+                    StudentId = studentId > 0 ? studentId : null,
+                    CourseId = courseId,
+                    GroupId = groupId
+                };
+
+                _enrollRepo.Add(enroll);
+                await _enrollRepo.SaveAsync();
+                return true;
+            }
+            return false;
+        }
+
+        public async Task UnenrollGroupFromCourseAsync(int courseId, int groupId)
+        {
+            var allEnrollments = await _enrollRepo.GetAllAsync();
+            var toDelete = allEnrollments.Where(e => e.CourseId == courseId && e.GroupId == groupId).ToList();
+
+            foreach (var item in toDelete)
+            {
+                _enrollRepo.Delete(item);
+            }
+
+            if (toDelete.Any())
+            {
+                await _enrollRepo.SaveAsync();
+            }
         }
     }
 }

@@ -9,6 +9,6 @@ namespace Practice.Services.Interfaces
         Task<Supervisor?> GetSupervisorProfileAsync(int userId);
         Task<List<InternshipAssignment>> GetStudentsForSupervisorAsync(int supervisorId);
         Task<InternshipAssignment?> GetAssignmentDetailsAsync(int assignmentId);
-        Task SaveAssessmentAsync(int assignmentId, string feedback, int? statusId, int? grade);
+        Task SaveAssessmentAsync(int assignmentId, string feedback, int? finalGrade, int? reportStatusId, int? companyGrade, string companyFeedback);
     }
 }

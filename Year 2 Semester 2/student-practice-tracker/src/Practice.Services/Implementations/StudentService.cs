@@ -1,6 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Practice.Data.Context;
-using Practice.Data.Entities;
+﻿using Practice.Data.Entities;
+using Practice.Repositories.Interfaces;
 using Practice.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,189 +10,99 @@ namespace Practice.Services.Implementations
 {
     public class StudentService : IStudentService
     {
-        private readonly AppDbContext _context;
+        private readonly IStudentRepository _studentRepo;
+        private readonly IInternshipAssignmentRepository _assignRepo;
+        private readonly IInternshipTopicRepository _topicRepo;
+        private readonly ICourseRepository _courseRepo;
+        private readonly IReportRepository _reportRepo;
+        private readonly IAuditLogRepository _logRepo;
+        private readonly IAuditService _auditService;
 
-        public StudentService(AppDbContext context)
+        public StudentService(
+            IStudentRepository studentRepo,
+            IInternshipAssignmentRepository assignRepo,
+            IInternshipTopicRepository topicRepo,
+            ICourseRepository courseRepo,
+            IReportRepository reportRepo,
+            IAuditLogRepository logRepo,
+            IAuditService auditService)
         {
-            _context = context;
+            _studentRepo = studentRepo;
+            _assignRepo = assignRepo;
+            _topicRepo = topicRepo;
+            _courseRepo = courseRepo;
+            _reportRepo = reportRepo;
+            _logRepo = logRepo;
+            _auditService = auditService;
         }
 
-        public async Task<Student?> GetStudentProfileAsync(int userId)
-        {
-            using var context = new AppDbContext();
-            return await context.Students
-                .AsNoTracking()
-                .Include(s => s.User)
-                .Include(s => s.StudentGroup)
-                .FirstOrDefaultAsync(s => s.UserId == userId);
-        }
+        public async Task<Student?> GetStudentProfileAsync(int userId) => await _studentRepo.GetStudentProfileAsync(userId);
 
         public async Task<List<Course>> GetEnrolledCoursesAsync(int studentId)
         {
-            using var context = new AppDbContext();
-            return await context.CourseEnrollments
-                .AsNoTracking()
-                .Where(e => e.StudentId == studentId)
-                .Select(e => e.Course)
-                .Where(c => c.IsActive)
-                .ToListAsync();
+            var student = await _studentRepo.GetByIdAsync(studentId);
+            if (student == null) return new List<Course>();
+            return await _studentRepo.GetEnrolledCoursesForStudentAsync(studentId, student.GroupId);
         }
 
-        public async Task<InternshipAssignment?> GetAssignmentAsync(int studentId, int courseId)
+        public async Task<InternshipAssignment?> GetAssignmentAsync(int studentId, int courseId) =>
+            await _assignRepo.GetByStudentAndCourseAsync(studentId, courseId);
+
+        public async Task<List<InternshipTopic>> GetAvailableTopicsAsync(int disciplineId, int? organizationId)
         {
-            using var context = new AppDbContext();
-            return await context.InternshipAssignments
-                .AsNoTracking()
-                .Include(a => a.Supervisor).ThenInclude(s => s.User)
-                .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization)
-                .Include(a => a.Reports).ThenInclude(r => r.Attachments)
-                .FirstOrDefaultAsync(a => a.StudentId == studentId && a.CourseId == courseId);
-        }
-
-        public async Task<List<InternshipTopic>> GetAvailableTopicsAsync(int? disciplineId, int? organizationId = null)
-        {
-            using var context = new AppDbContext();
-            var query = context.InternshipTopics
-                .AsNoTracking()
-                .Include(t => t.Organization)
-                .Where(t => t.IsAvailable == true)
-                .AsQueryable();
-
-            if (disciplineId.HasValue && disciplineId.Value > 0)
-                query = query.Where(t => t.DisciplineId == disciplineId.Value);
-
-            if (organizationId.HasValue)
-                query = query.Where(t => t.OrganizationId == organizationId.Value);
-
-            return await query.ToListAsync();
+            var allTopics = await _topicRepo.GetAllAsync();
+            return allTopics
+                .Where(t => t.IsAvailable && t.DisciplineId == disciplineId && (!organizationId.HasValue || t.OrganizationId == organizationId))
+                .ToList();
         }
 
         public async Task SelectTopicAsync(int studentId, int topicId, int courseId)
         {
-            using var context = new AppDbContext();
+            var assignment = await _assignRepo.GetByStudentAndCourseAsync(studentId, courseId);
 
-            // 1. Перевірка
-            bool exists = await context.InternshipAssignments.AnyAsync(a => a.StudentId == studentId && a.CourseId == courseId);
-            if (exists) throw new Exception("Ви вже обрали тему на цьому курсі.");
-
-            // 2. Тема
-            var topic = await context.InternshipTopics.FindAsync(topicId);
-            if (topic == null || !topic.IsAvailable) throw new Exception("Тема недоступна або вже зайнята.");
-
-            // 3. Курс (для керівника)
-            var course = await context.Courses.FindAsync(courseId);
-            if (course == null) throw new Exception("Курс не знайдено.");
-
-            var assignment = new InternshipAssignment
+            if (assignment == null)
             {
-                StudentId = studentId,
-                CourseId = courseId,
-                TopicId = topicId,
-                SupervisorId = course.SupervisorId, 
-                StartDate = DateTime.UtcNow,
-                StatusId = 2 // "В процесі"
-            };
-
-            topic.IsAvailable = false;
-            context.InternshipTopics.Update(topic);
-            context.InternshipAssignments.Add(assignment);
-
-            await context.SaveChangesAsync();
-
-
-            try
-            {
-                await LogHistoryAsync(context, assignment.AssignmentId, studentId, "Topic Selected", $"Обрано тему: {topic.Title}");
-            }
-            catch { }
-        }
-
-        public async Task SubmitReportAsync(int assignmentId, string comment, string link, List<Attachment> uiAttachments)
-        {
-            using var context = new AppDbContext();
-
-            var assignment = await context.InternshipAssignments
-                .Include(a => a.Reports).ThenInclude(r => r.Attachments)
-                .FirstOrDefaultAsync(a => a.AssignmentId == assignmentId);
-
-            if (assignment == null) throw new Exception("Призначення не знайдено");
-
-            var report = assignment.Reports.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
-            bool isNew = false;
-
-            if (report == null || report.StatusId == 3) // Новий звіт
-            {
-                isNew = true;
-                report = new Report
+                var course = await _courseRepo.GetByIdAsync(courseId);
+                var newAssign = new InternshipAssignment
                 {
-                    AssignmentId = assignmentId,
-                    StudentComment = comment,
-                    SubmissionDate = DateTime.UtcNow,
+                    StudentId = studentId,
+                    CourseId = courseId,
+                    TopicId = topicId,
                     StatusId = 1,
-                    Attachments = new List<Attachment>()
+                    SupervisorId = course?.SupervisorId,
+                    StartDate = DateTime.Now,
+                    EndDate = DateTime.Now.AddMonths(1)
                 };
-                context.Reports.Add(report);
+
+                await _assignRepo.AddAssignmentWithTopicUpdateAsync(newAssign, topicId);
             }
-            else 
+            else
             {
-                report.StudentComment = comment;
-                report.SubmissionDate = DateTime.UtcNow;
-                report.StatusId = 1;
-
-                var oldFiles = report.Attachments.Where(a => a.FileType != "URL").ToList();
-                context.Attachments.RemoveRange(oldFiles);
+                await _assignRepo.UpdateAssignmentTopicAsync(assignment, topicId);
             }
 
-            foreach (var att in uiAttachments)
-            {
-                report.Attachments.Add(new Attachment
-                {
-                    FileName = att.FileName,
-                    FilePath = att.FilePath,
-                    FileType = att.FileType
-                });
-            }
-
-            if (!string.IsNullOrEmpty(link))
-            {
-                var existLink = report.Attachments.FirstOrDefault(a => a.FileType == "URL");
-                if (existLink != null) existLink.FilePath = link;
-                else report.Attachments.Add(new Attachment { FileName = "Link", FilePath = link, FileType = "URL" });
-            }
-
-            await context.SaveChangesAsync();
-
-            try
-            {
-                string action = isNew ? "Report Submitted" : "Report Updated";
-                await LogHistoryAsync(context, assignmentId, assignment.StudentId, action, "Студент надіслав звіт.");
-            }
-            catch { }
+            await _assignRepo.SaveAsync();
+            await _auditService.LogActionAsync(null, "SelectTopic", $"Студент обрав тему ID: {topicId}", "InternshipAssignment", topicId);
         }
 
-        public async Task<List<AuditLog>> GetAssignmentHistoryAsync(int assignmentId)
+        public async Task SubmitReportAsync(int assignmentId, string comment, string link, List<Attachment> files)
         {
-            using var context = new AppDbContext();
-            return await context.AuditLogs
-                .AsNoTracking()
-                .Where(l => l.EntityName == "Assignment" && l.EntityId == assignmentId)
-                .OrderByDescending(l => l.TimeStamp)
-                .ToListAsync();
-        }
-
-        private async Task LogHistoryAsync(AppDbContext context, int assignmentId, int userId, string action, string details)
-        {
-            var log = new AuditLog
+            var report = new Report
             {
-                UserId = userId,
-                Action = action,
-                Details = details,
-                EntityName = "Assignment",
-                EntityId = assignmentId,
-                TimeStamp = DateTime.UtcNow
+                AssignmentId = assignmentId,
+                StudentComment = comment,
+                SubmissionDate = DateTime.Now,
+                StatusId = 1,
+                Attachments = new List<Attachment>()
             };
-            context.AuditLogs.Add(log);
-            await context.SaveChangesAsync();
+            if (files != null) foreach (var f in files) { f.AttachmentId = 0; report.Attachments.Add(f); }
+            if (!string.IsNullOrEmpty(link)) report.Attachments.Add(new Attachment { FilePath = link, FileType = "URL", FileName = "Посилання" });
+
+            _reportRepo.Add(report);
+            await _reportRepo.SaveAsync();
         }
+
+        public async Task<List<AuditLog>> GetAssignmentHistoryAsync(int assignmentId) =>
+            await _logRepo.GetHistoryForAssignmentAsync(assignmentId);
     }
 }

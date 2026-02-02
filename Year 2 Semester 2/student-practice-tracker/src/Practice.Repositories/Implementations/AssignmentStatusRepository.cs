@@ -16,6 +16,6 @@ namespace Practice.Repositories.Implementations
         public async Task<AssignmentStatus> GetByNameAsync(string statusName)
         {
             return await _dbSet.FirstOrDefaultAsync(s => s.StatusName == statusName);
-    }
+        }
     }
 }

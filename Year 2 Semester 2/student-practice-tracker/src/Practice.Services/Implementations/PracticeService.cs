@@ -1,12 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Practice.Data.Context;
-using Practice.Data.Entities;
+﻿using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using Practice.Services.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
+using System.Linq; // Додано для LINQ
 using System.Threading.Tasks;
 
 namespace Practice.Services.Implementations
@@ -35,53 +32,48 @@ namespace Practice.Services.Implementations
 
         public async Task<IEnumerable<InternshipTopic>> GetAvailableTopicsAsync()
         {
-            return await _topicRepo.GetAvailableTopicsAsync();
+            return await _topicRepo.GetAllAsync();
         }
 
         public async Task<bool> AddTopicAsync(InternshipTopic topic)
         {
-            if (string.IsNullOrWhiteSpace(topic.Title)) throw new ArgumentException("Назва теми обов'язкова");
             topic.IsAvailable = true;
             _topicRepo.Add(topic);
             await _topicRepo.SaveAsync();
-            await _auditService.LogActionAsync(null, "Create", $"Створено тему: {topic.Title}", "InternshipTopic", topic.TopicId);
+            await _auditService.LogActionAsync(null, "Create", $"Topic {topic.Title}", "Topic", topic.TopicId);
             return true;
         }
 
         public async Task UpdateTopicAsync(InternshipTopic topic)
         {
-            using var context = new AppDbContext();
-            var existing = await context.InternshipTopics.FindAsync(topic.TopicId);
+            var existing = await _topicRepo.GetByIdAsync(topic.TopicId);
             if (existing != null)
             {
                 existing.Title = topic.Title;
                 existing.Description = topic.Description;
                 existing.OrganizationId = topic.OrganizationId;
                 existing.DisciplineId = topic.DisciplineId;
+                existing.IsAvailable = topic.IsAvailable;
 
-                context.InternshipTopics.Update(existing);
-                await context.SaveChangesAsync();
-                await _auditService.LogActionAsync(null, "Update", $"Оновлено тему: {topic.Title}", "InternshipTopic", topic.TopicId);
+                _topicRepo.Update(existing);
+                await _topicRepo.SaveAsync();
             }
         }
 
         public async Task DeleteTopicAsync(int topicId)
         {
-            using var context = new AppDbContext();
-            var item = await context.InternshipTopics.FindAsync(topicId);
+            var item = await _topicRepo.GetByIdAsync(topicId);
             if (item != null)
             {
-                string title = item.Title;
-                context.InternshipTopics.Remove(item);
-                await context.SaveChangesAsync();
-                await _auditService.LogActionAsync(null, "Delete", $"Видалено тему: {title}", "InternshipTopic", topicId);
+                _topicRepo.Delete(item);
+                await _topicRepo.SaveAsync();
             }
         }
 
+        // --- Assignments ---
         public async Task<bool> AssignTopicAsync(int studentId, int topicId, int courseId, int supervisorId, string individualTask)
         {
             var status = await _statusRepo.GetByNameAsync("Assigned") ?? await _statusRepo.GetByIdAsync(1);
-
             var assignment = new InternshipAssignment
             {
                 StudentId = studentId,
@@ -102,8 +94,8 @@ namespace Practice.Services.Implementations
 
             _assignmentRepo.Add(assignment);
             await _assignmentRepo.SaveAsync();
-            await _topicRepo.SaveAsync();
-            await _auditService.LogActionAsync(null, "Assign", $"Студент {studentId} обрав тему {topicId}", "InternshipAssignment", assignment.AssignmentId);
+
+            await _auditService.LogActionAsync(studentId, "Assign", $"Topic assigned", "Assignment", assignment.AssignmentId);
             return true;
         }
 
@@ -112,53 +104,28 @@ namespace Practice.Services.Implementations
             return await _assignmentRepo.GetActiveAssignmentAsync(studentId);
         }
 
-        public async Task<IEnumerable<Organization>> GetAllOrganizationsAsync()
-        {
-            return await _orgRepo.GetAllAsync();
-        }
+        // --- Organizations ---
+        public async Task<IEnumerable<Organization>> GetAllOrganizationsAsync() => await _orgRepo.GetAllAsync();
 
-        public async Task<Organization> CreateOrganizationAsync(string name, string address, string type)
+        public async Task<Organization> CreateOrganizationAsync(string name, string address, string type, string email)
         {
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Назва організації обов'язкова");
             var org = new Organization
             {
                 Name = name,
                 Address = address ?? "",
                 Type = type ?? "Company",
-                ContactEmail = ""
+                ContactEmail = email ?? "" 
             };
             _orgRepo.Add(org);
             await _orgRepo.SaveAsync();
-            await _auditService.LogActionAsync(null, "Create", $"Створено організацію: {name}", "Organization", org.OrganizationId);
+            await _auditService.LogActionAsync(null, "Create", $"Створено орг.: {name}", "Organization", org.OrganizationId);
             return org;
         }
 
-        public void CreateBackup(string destinationPath)
-        {
-            string folderName = "StudentPracticePlatform";
-            string dbPath = "";
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), folderName, "practice_platform.db");
-            else
-                dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share", folderName, "practice_platform.db");
-
-            if (File.Exists(dbPath))
-            {
-                File.Copy(dbPath, destinationPath, true);
-            }
-        }
         public async Task DeleteOrganizationAsync(int id)
         {
-            using var context = new AppDbContext();
-            var item = await context.Organizations.FindAsync(id);
-            if (item != null)
-            {
-                string name = item.Name;
-                context.Organizations.Remove(item);
-                await context.SaveChangesAsync();
-                await _auditService.LogActionAsync(null, "Delete", $"Видалено організацію: {name}", "Organization", id);
-            }
+            var item = await _orgRepo.GetByIdAsync(id);
+            if (item != null) { _orgRepo.Delete(item); await _orgRepo.SaveAsync(); }
         }
     }
 }

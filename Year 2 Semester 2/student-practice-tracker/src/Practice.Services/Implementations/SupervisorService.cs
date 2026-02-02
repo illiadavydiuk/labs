@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Practice.Data.Context;
 using Practice.Data.Entities;
+using Practice.Repositories.Interfaces;
 using Practice.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,77 +12,76 @@ namespace Practice.Services.Implementations
 {
     public class SupervisorService : ISupervisorService
     {
+        private readonly ISupervisorRepository _supervisorRepo;
+        private readonly IInternshipAssignmentRepository _assignRepo;
+        private readonly IReportRepository _reportRepo;
         private readonly AppDbContext _context;
 
-        public SupervisorService(AppDbContext context)
+        public SupervisorService(
+            ISupervisorRepository supervisorRepo,
+            IInternshipAssignmentRepository assignRepo,
+            IReportRepository reportRepo,
+            AppDbContext context)
         {
+            _supervisorRepo = supervisorRepo;
+            _assignRepo = assignRepo;
+            _reportRepo = reportRepo;
             _context = context;
+        }
+
+        public async Task<Supervisor?> GetSupervisorProfileAsync(int userId)
+        {
+            return await _supervisorRepo.GetSupervisorProfileAsync(userId);
         }
 
         public async Task<List<InternshipAssignment>> GetStudentsForSupervisorAsync(int supervisorId)
         {
-            using var context = new AppDbContext();
-
-            return await context.InternshipAssignments
-                .AsNoTracking()
+            return await _context.InternshipAssignments
                 .Include(a => a.Student).ThenInclude(s => s.User)
                 .Include(a => a.Student).ThenInclude(s => s.StudentGroup)
-                .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization)
                 .Include(a => a.Course)
+                .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization)
                 .Include(a => a.Reports)
-                .Where(a => a.SupervisorId == supervisorId)
+                .Where(a => a.SupervisorId == supervisorId || a.Course.SupervisorId == supervisorId)
                 .ToListAsync();
         }
 
         public async Task<InternshipAssignment?> GetAssignmentDetailsAsync(int assignmentId)
         {
-            using var context = new AppDbContext();
-            return await context.InternshipAssignments
-                .AsNoTracking()
+            return await _context.InternshipAssignments
                 .Include(a => a.Student).ThenInclude(s => s.User)
-                .Include(a => a.InternshipTopic)
-                .Include(a => a.Reports).ThenInclude(r => r.Attachments)
-                .FirstOrDefaultAsync(a => a.AssignmentId == assignmentId);
-        }
-
-        public async Task<Supervisor?> GetSupervisorProfileAsync(int userId)
-        {
-            using var context = new AppDbContext();
-            return await context.Supervisors
-                .AsNoTracking()
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.UserId == userId);
-        }
-
-        public async Task SaveAssessmentAsync(int assignmentId, string feedback, int? grade, int? statusId)
-        {
-            using var context = new AppDbContext();
-
-            var assignment = await context.InternshipAssignments
+                .Include(a => a.Student).ThenInclude(s => s.StudentGroup)
+                .Include(a => a.Course)
+                .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization)
                 .Include(a => a.Reports)
                 .FirstOrDefaultAsync(a => a.AssignmentId == assignmentId);
+        }
 
-            if (assignment == null) throw new Exception("Призначення не знайдено");
+        public async Task SaveAssessmentAsync(int assignmentId, string feedback, int? finalGrade, int? reportStatusId, int? companyGrade, string companyFeedback)
+        {
+            var assignment = await _assignRepo.GetByIdAsync(assignmentId);
+            if (assignment == null) return;
 
-            if (grade.HasValue) assignment.FinalGrade = grade.Value;
-            if (statusId.HasValue) assignment.StatusId = statusId.Value;
+            assignment.FinalGrade = finalGrade;
+            assignment.CompanyGrade = companyGrade;
+            assignment.CompanyFeedback = companyFeedback;
 
-            var lastReport = assignment.Reports.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
-
-            if (lastReport != null)
+            if (reportStatusId.HasValue)
             {
-                if (!string.IsNullOrEmpty(feedback))
-                {
-                    lastReport.SupervisorFeedback = feedback;
-                }
+                var reports = await _reportRepo.GetAllAsync();
+                var lastReport = reports.Where(r => r.AssignmentId == assignmentId).OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
 
-                if (statusId == 3)
+                if (lastReport != null)
                 {
-                    lastReport.StatusId = 3; // Прийнято
+                    lastReport.StatusId = reportStatusId.Value;
+                    lastReport.SupervisorFeedback = feedback;
+                    lastReport.ReviewDate = DateTime.Now;
+                    _reportRepo.Update(lastReport);
                 }
             }
 
-            await context.SaveChangesAsync();
+            _assignRepo.Update(assignment);
+            await _assignRepo.SaveAsync();
         }
     }
 }

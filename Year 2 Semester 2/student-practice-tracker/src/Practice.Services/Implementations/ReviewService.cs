@@ -1,6 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Practice.Data.Context;
-using Practice.Data.Entities;
+﻿using Practice.Data.Entities;
+using Practice.Repositories.Interfaces;
 using Practice.Services.Interfaces;
 using System;
 using System.Threading.Tasks;
@@ -9,55 +8,41 @@ namespace Practice.Services.Implementations
 {
     public class ReviewService : IReviewService
     {
-        private readonly AppDbContext _context;
+        private readonly IReportRepository _reportRepo;
+        private readonly IInternshipAssignmentRepository _assignmentRepo;
+        private readonly IAuditService _auditService;
 
-        public ReviewService(AppDbContext context)
+        public ReviewService(
+            IReportRepository reportRepo,
+            IInternshipAssignmentRepository assignmentRepo,
+            IAuditService auditService)
         {
-            _context = context;
+            _reportRepo = reportRepo;
+            _assignmentRepo = assignmentRepo;
+            _auditService = auditService;
         }
 
         public async Task ReviewReportAsync(int reportId, int supervisorId, int statusId, string feedback, int? grade)
         {
-            using var context = new AppDbContext();
-
-            var report = await context.Reports
-                .Include(r => r.InternshipAssignment) 
-                .FirstOrDefaultAsync(r => r.ReportId == reportId);
-
+            var report = await _reportRepo.GetByIdAsync(reportId);
             if (report == null) throw new Exception("Звіт не знайдено");
 
             report.StatusId = statusId;
             report.SupervisorFeedback = feedback;
+            _reportRepo.Update(report);
 
-            if (grade.HasValue)
+            var assignment = await _assignmentRepo.GetByIdAsync(report.AssignmentId);
+            if (assignment != null)
             {
-                report.InternshipAssignment.FinalGrade = grade.Value;
+                if (grade.HasValue) assignment.FinalGrade = grade.Value;
+                if (statusId == 3) assignment.StatusId = 3; 
+                _assignmentRepo.Update(assignment);
             }
 
-            if (statusId == 3)
-            {
-                report.InternshipAssignment.StatusId = 3;
-            }
+            await _reportRepo.SaveAsync(); 
 
-            await context.SaveChangesAsync();
-
-            // Логування
             string action = statusId == 3 ? "Report Accepted" : "Report Returned";
-            string msg = statusId == 3
-                ? $"Викладач прийняв звіт. Оцінка: {grade}"
-                : $"Викладач повернув звіт. Зауваження: {feedback}";
-
-            var log = new AuditLog
-            {
-                UserId = supervisorId,
-                Action = action,
-                Details = msg,
-                EntityName = "Assignment",
-                EntityId = report.AssignmentId,
-                TimeStamp = DateTime.UtcNow
-            };
-            context.AuditLogs.Add(log);
-            await context.SaveChangesAsync();
+            await _auditService.LogActionAsync(supervisorId, action, $"Grade: {grade}, Feedback: {feedback}", "Assignment", assignment.AssignmentId);
         }
     }
 }

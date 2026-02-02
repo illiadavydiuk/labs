@@ -40,7 +40,7 @@
                     </Border>
                     <StackPanel VerticalAlignment="Center" Margin="15,0,0,0">
                         <TextBlock Text="КАБІНЕТ КЕРІВНИКА" FontWeight="Bold" FontSize="14" Foreground="#757575"/>
-                        <TextBlock x:Name="TxtSupervisorName" Text="Викладач І.П." FontSize="18" FontWeight="SemiBold" Foreground="#212121"/>
+                        <TextBlock x:Name="TxtSupervisorName" Text="Викладач..." FontSize="18" FontWeight="SemiBold" Foreground="#212121"/>
                     </StackPanel>
                 </StackPanel>
                 <Button Grid.Column="2" Content="Вийти" Click="BtnLogout_Click" Background="#FFEBEE" Foreground="#D32F2F" Height="35" Width="80" BorderThickness="0"/>
@@ -65,13 +65,10 @@
                 <Border Grid.Row="1" Background="White" CornerRadius="5" Padding="10" Margin="0,0,0,15" BorderBrush="#EEE" BorderThickness="1">
                     <StackPanel>
                         <TextBlock Text="Фільтрація:" FontWeight="Bold" FontSize="12" Margin="0,0,0,5" Foreground="Gray"/>
-
                         <TextBlock Text="Курс:" FontSize="11" Foreground="Gray"/>
                         <ComboBox x:Name="CmbFilterCourse" DisplayMemberPath="Name" SelectedValuePath="CourseId" SelectionChanged="Filter_SelectionChanged" Margin="0,0,0,8"/>
-
                         <TextBlock Text="Група:" FontSize="11" Foreground="Gray"/>
                         <ComboBox x:Name="CmbFilterGroup" DisplayMemberPath="GroupCode" SelectedValuePath="GroupId" SelectionChanged="Filter_SelectionChanged" Margin="0,0,0,10"/>
-
                         <Button Content="Скинути фільтри" Click="BtnResetFilters_Click" Background="#ECEFF1" Foreground="Black" FontSize="11" Height="37"/>
                     </StackPanel>
                 </Border>
@@ -144,25 +141,20 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-
                                         <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                                             <Border x:Name="Step1Circle" Width="24" Height="24" CornerRadius="12" Background="#4CAF50" Margin="0,0,0,2">
                                                 <TextBlock Text="✔" Foreground="White" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <TextBlock Text="Тема" FontSize="10" Foreground="#555"/>
                                         </StackPanel>
-
                                         <Rectangle Grid.Column="1" Height="2" Fill="#DDD" VerticalAlignment="Top" Margin="5,12,5,0" x:Name="Line1"/>
-
                                         <StackPanel Grid.Column="2" HorizontalAlignment="Center">
                                             <Border x:Name="Step2Circle" Width="24" Height="24" CornerRadius="12" Background="#DDD" Margin="0,0,0,2">
                                                 <TextBlock Text="2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <TextBlock x:Name="Step2Text" Text="Звіт" FontSize="10" Foreground="#999"/>
                                         </StackPanel>
-
                                         <Rectangle Grid.Column="3" Height="2" Fill="#DDD" VerticalAlignment="Top" Margin="5,12,5,0" x:Name="Line2"/>
-
                                         <StackPanel Grid.Column="4" HorizontalAlignment="Center">
                                             <Border x:Name="Step3Circle" Width="24" Height="24" CornerRadius="12" Background="#DDD" Margin="0,0,0,2">
                                                 <TextBlock Text="3" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -180,7 +172,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="Коментар:" FontWeight="Bold"/>
+                                            <TextBlock Text="Коментар студента:" FontWeight="Bold"/>
                                             <TextBlock x:Name="TxtReportDate" Text="Дата: -" Foreground="Gray" Grid.Column="1"/>
                                         </Grid>
                                         <TextBlock x:Name="TxtStudentComment" Text="..." TextWrapping="Wrap" Margin="0,0,0,15" FontStyle="Italic"/>
@@ -189,13 +181,10 @@
                                         <TextBox x:Name="TxtStudentLink" IsReadOnly="True" Background="Transparent" BorderThickness="0" Foreground="Blue" Text="-" Margin="0,0,0,15"/>
 
                                         <TextBlock Text="Файли:" FontWeight="Bold" Margin="0,0,0,5"/>
-
                                         <ListBox x:Name="ListAttachments" BorderThickness="0" Background="Transparent">
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Button Click="BtnOpenFile_Click" Tag="{Binding FilePath}" 
-                                                            Background="White" BorderBrush="#DDD" BorderThickness="1" 
-                                                            Margin="0,2" HorizontalContentAlignment="Left" Padding="5" Foreground="Black">
+                                                    <Button Click="BtnOpenFile_Click" Tag="{Binding FilePath}" Background="White" BorderBrush="#DDD" BorderThickness="1" Margin="0,2" HorizontalContentAlignment="Left" Padding="5" Foreground="Black">
                                                         <StackPanel Orientation="Horizontal">
                                                             <TextBlock Text="📄" Margin="0,0,10,0" Foreground="#555"/>
                                                             <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -207,33 +196,63 @@
                                     </StackPanel>
                                 </Border>
 
-                                <TextBlock Text="2. Оцінювання" FontSize="18" FontWeight="Bold" Foreground="#1976D2" Margin="0,0,0,10"/>
-                                <Border BorderBrush="#DDD" BorderThickness="1" CornerRadius="5" Padding="15">
+                                <TextBlock Text="2. Оцінювання та Статус" FontSize="18" FontWeight="Bold" Foreground="#1976D2" Margin="0,0,0,10"/>
+                                <Border BorderBrush="#DDD" BorderThickness="1" CornerRadius="5" Padding="15" Margin="0,0,0,20">
                                     <StackPanel>
-                                        <TextBlock Text="Відгук:" Margin="0,0,0,5"/>
-                                        <TextBox x:Name="TxtSupervisorFeedback" Height="80" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" Margin="0,0,0,15" BorderBrush="#CCC"/>
-                                        <Grid Margin="0,0,0,20">
+                                        <TextBlock Text="Відгук викладача:" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                                        <TextBox x:Name="TxtSupervisorFeedback" Height="60" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" Margin="0,0,0,15" BorderBrush="#CCC"/>
+
+                                        <Grid Margin="0,0,0,15">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="20"/>
+                                                <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <TextBlock Text="Статус:" Margin="0,0,0,5"/>
-                                                <ComboBox x:Name="CmbReportStatus" Width="200" HorizontalAlignment="Left">
+
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Оцінка компанії (0-100):" Margin="0,0,0,5"/>
+                                                <TextBox x:Name="TxtCompanyGrade" Padding="5"/>
+                                                <TextBlock Text="Відгук компанії:" Margin="0,5,0,5"/>
+                                                <TextBox x:Name="TxtCompanyFeedback" Height="50" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Фінальна оцінка (0-100):" Margin="0,0,0,5" FontWeight="Bold"/>
+                                                <TextBox x:Name="TxtFinalGrade" Padding="5" FontSize="16" FontWeight="Bold" HorizontalAlignment="Left" Width="80"/>
+                                                <TextBlock Text="Статус звіту:" Margin="0,15,0,5"/>
+                                                <ComboBox x:Name="CmbReportStatus" HorizontalAlignment="Stretch">
                                                     <ComboBoxItem Content="На перевірці" Tag="1"/>
-                                                    <ComboBoxItem Content="Повернути" Tag="2"/>
-                                                    <ComboBoxItem Content="Прийнято" Tag="3"/>
+                                                    <ComboBoxItem Content="Повернути на доопрацювання" Tag="2" Foreground="Red"/>
+                                                    <ComboBoxItem Content="Прийнято" Tag="3" Foreground="Green" FontWeight="Bold"/>
                                                 </ComboBox>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1" Margin="20,0,0,0">
-                                                <TextBlock Text="Оцінка (0-100):" Margin="0,0,0,5" FontWeight="Bold"/>
-                                                <TextBox x:Name="TxtFinalGrade" Width="80" HorizontalAlignment="Left" Padding="5" FontSize="14" FontWeight="Bold" TextAlignment="Center"/>
-                                            </StackPanel>
                                         </Grid>
-                                        <Button Content="Зберегти" Click="BtnSaveAssessment_Click" Background="#4CAF50" Width="150" HorizontalAlignment="Right" Foreground="White" Height="30"/>
+
+                                        <Button Content="ЗБЕРЕГТИ РІШЕННЯ" Click="BtnSaveAssessment_Click" Background="#2196F3" Width="200" HorizontalAlignment="Right" Foreground="White" Height="40" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Border>
+
+                                <TextBlock Text="Хронологія подій" FontSize="18" FontWeight="Bold" Foreground="#1976D2" Margin="0,0,0,10"/>
+                                <Border Background="#FAFAFA" CornerRadius="5" Padding="15" BorderBrush="#EEE" BorderThickness="1">
+                                    <ListBox x:Name="ListHistory" BorderThickness="0" Background="Transparent">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding TimeStamp, StringFormat=dd.MM HH:mm}" Foreground="Gray" Width="90" FontSize="11" VerticalAlignment="Top"/>
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="{Binding Action}" FontWeight="Bold" FontSize="12" Foreground="#333"/>
+                                                        <TextBlock Text="{Binding Details}" TextWrapping="Wrap" FontSize="11" Foreground="#555"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>

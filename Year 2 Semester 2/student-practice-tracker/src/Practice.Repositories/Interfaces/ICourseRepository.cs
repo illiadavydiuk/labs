@@ -9,5 +9,6 @@ namespace Practice.Repositories.Interfaces
     {
         Task<IEnumerable<Course>> GetActiveCoursesAsync();
         Task<IEnumerable<Course>> GetAllActiveAsync();
+        Task<IEnumerable<Course>> GetAllActiveCoursesAsync();
     }
 }

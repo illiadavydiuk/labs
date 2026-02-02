@@ -41,7 +41,6 @@
             </Setter>
         </Style>
 
-
         <Style x:Key="SidebarRadio" TargetType="RadioButton">
             <Setter Property="Template">
                 <Setter.Value>
@@ -249,9 +248,6 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
-                                                <Button Style="{StaticResource IconButton}" Background="#FF9800" Click="BtnEditSupervisor_Click" Tag="{Binding SupervisorId}">
-                                                    <Path Data="{StaticResource IconPencil}" Fill="White" Stretch="Uniform" Margin="2"/>
-                                                </Button>
                                                 <Button Style="{StaticResource IconButton}" Background="#F44336" Click="BtnDeleteSupervisor_Click" Tag="{Binding UserId}">
                                                     <Path Data="{StaticResource IconClose}" Fill="White" Stretch="Uniform" Margin="2"/>
                                                 </Button>
@@ -472,6 +468,9 @@
                             <TextBlock Text="Адреса" Style="{StaticResource LabelStyle}"/>
                             <TextBox x:Name="TxtOrgAddr" Margin="0,0,0,10"/>
 
+                            <TextBlock Text="Email" Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="TxtOrgEmail" Margin="0,0,0,10"/>
+
                             <Button Content="Додати організацію" Click="BtnAddOrg_Click" Background="#607D8B" Foreground="White" Padding="10" BorderThickness="0"/>
                         </StackPanel>
                     </Border>
@@ -491,11 +490,12 @@
                                     <Button Content="Очистити" Click="BtnResetTopicFilter_Click" Background="#90A4AE" Foreground="White" Margin="10,0,0,0" Padding="10,5" BorderThickness="0"/>
                                 </StackPanel>
                             </GroupBox.Header>
-                            <DataGrid x:Name="GridTopics" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
+                            <DataGrid x:Name="GridTopics" IsReadOnly="False" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Назва" Binding="{Binding Title}" Width="*"/>
-                                    <DataGridTextColumn Header="Предмет" Binding="{Binding Discipline.DisciplineName}" Width="150"/>
-                                    <DataGridTextColumn Header="Організація" Binding="{Binding Organization.Name}" Width="200"/>
+                                    <DataGridTextColumn Header="Назва" Binding="{Binding Title}" Width="*" IsReadOnly="True"/>
+                                    <DataGridTextColumn Header="Предмет" Binding="{Binding Discipline.DisciplineName}" Width="150" IsReadOnly="True"/>
+                                    <DataGridTextColumn Header="Організація" Binding="{Binding Organization.Name}" Width="200" IsReadOnly="True"/>
+
                                     <DataGridTemplateColumn Header="Вільна" Width="60">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -503,6 +503,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
+
                                     <DataGridTemplateColumn Width="80" Header="Дії">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -538,6 +539,9 @@
                                     <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="*"/>
                                     <DataGridTextColumn Header="Адреса" Binding="{Binding Address}" Width="*"/>
                                     <DataGridTextColumn Header="Тип" Binding="{Binding Type}" Width="100"/>
+
+                                    <DataGridTextColumn Header="Email" Binding="{Binding ContactEmail}" Width="150"/>
+
                                     <DataGridTemplateColumn Width="80" Header="Дії">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -602,12 +606,50 @@
                             <ComboBox x:Name="CmbCourseFilterGroup" Width="120" DisplayMemberPath="GroupCode" SelectedValuePath="GroupId" SelectionChanged="CmbCourseFilterGroup_SelectionChanged" Height="25" Padding="5,0"/>
                             <Button Content="Очистити" Click="BtnResetCourseFilter_Click" Background="#90A4AE" Foreground="White" Margin="10,0,0,0" Padding="10,5" BorderThickness="0"/>
                         </StackPanel>
-                        <DataGrid Grid.Row="1" x:Name="GridCourses" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="35">
+
+                        <DataGrid Grid.Row="1" x:Name="GridCourses" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="45">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Назва курсу" Binding="{Binding Name}" Width="*"/>
-                                <DataGridTextColumn Header="Рік" Binding="{Binding Year}" Width="60"/>
-                                <DataGridTextColumn Header="Дисципліна" Binding="{Binding Discipline.DisciplineName}" Width="150"/>
-                                <DataGridTextColumn Header="Керівник" Binding="{Binding Supervisor.User.LastName}" Width="150"/>
+                                <DataGridTextColumn Header="Назва курсу" Binding="{Binding Name}" Width="150"/>
+                                <DataGridTextColumn Header="Рік" Binding="{Binding Year}" Width="50"/>
+                                <DataGridTextColumn Header="Дисципліна" Binding="{Binding Discipline.DisciplineName}" Width="120"/>
+                                <DataGridTextColumn Header="Керівник" Binding="{Binding Supervisor.User.LastName}" Width="100"/>
+
+                                <DataGridTemplateColumn Header="Зараховані групи" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ItemsControl ItemsSource="{Binding CourseEnrollments}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel Orientation="Horizontal"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="#E3F2FD" CornerRadius="10" Margin="2" Padding="8,2" BorderBrush="#2196F3" BorderThickness="1">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding StudentGroup.GroupCode}" FontSize="11" VerticalAlignment="Center" Foreground="#1565C0" FontWeight="Bold"/>
+                                                                <Button Content="×" 
+                                                Click="BtnUnenrollOneGroup_Click" 
+                                                Tag="{Binding}"
+                                                Margin="5,0,0,0" 
+                                                Padding="0"
+                                                Width="16" Height="16"
+                                                FontSize="14"
+                                                FontWeight="Bold"
+                                                Background="Transparent" 
+                                                Foreground="Red" 
+                                                BorderThickness="0"
+                                                Cursor="Hand"
+                                                ToolTip="Відрахувати групу"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
                                 <DataGridTemplateColumn Width="80" Header="Дії">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -769,13 +811,17 @@
                     <TextBox x:Name="EditOrgName" Margin="0,0,0,10"/>
                     <TextBlock Text="Адреса:" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="EditOrgAddr" Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Email:" Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="EditOrgEmail" Margin="0,0,0,10"/>
+
                     <TextBlock Text="Тип:" Style="{StaticResource LabelStyle}"/>
                     <ComboBox x:Name="EditOrgType" Margin="0,0,0,20">
                         <ComboBoxItem Content="Зовнішня"/>
                         <ComboBoxItem Content="Кафедра"/>
                     </ComboBox>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Скасувати" Background="Transparent" Foreground="Gray" Click="BtnCloseModal_Click" Margin="0,0,10,0"/>
+                        <Button Content="Скасувати" Background="Transparent" Foreground="Gray" Click="BtnCancelEditOrg_Click" Margin="0,0,10,0"/>
                         <Button Content="Зберегти" Click="BtnSaveEditOrg_Click" Background="#4CAF50" Foreground="White" Padding="10" BorderThickness="0"/>
                     </StackPanel>
                 </StackPanel>

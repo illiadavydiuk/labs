@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -24,7 +25,6 @@ namespace Practice.Windows
             InitializeComponent();
             _currentUser = user;
             _supervisorService = supervisorService;
-
             Init();
         }
 
@@ -33,23 +33,15 @@ namespace Practice.Windows
             try
             {
                 _currentSupervisor = await _supervisorService.GetSupervisorProfileAsync(_currentUser.UserId);
-                if (_currentSupervisor == null)
-                {
-                    MessageBox.Show("Профіль викладача не знайдено.");
-                    Close();
-                    return;
-                }
+                if (_currentSupervisor == null) { MessageBox.Show("Профіль не знайдено."); Close(); return; }
 
                 TxtSupervisorName.Text = $"{_currentSupervisor.User.LastName} {_currentSupervisor.User.FirstName.FirstOrDefault()}.";
                 await LoadData();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Помилка ініціалізації: " + ex.Message);
-            }
+            catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
         }
 
-        private async System.Threading.Tasks.Task LoadData()
+        private async Task LoadData()
         {
             _allAssignments = await _supervisorService.GetStudentsForSupervisorAsync(_currentSupervisor.SupervisorId);
 
@@ -62,54 +54,58 @@ namespace Practice.Windows
         private void RenderList()
         {
             var filtered = _allAssignments.AsEnumerable();
+            if (CmbFilterCourse.SelectedValue is int cid) filtered = filtered.Where(a => a.CourseId == cid);
+            if (CmbFilterGroup.SelectedValue is int gid) filtered = filtered.Where(a => a.Student.GroupId == gid);
 
-            if (CmbFilterCourse.SelectedValue is int courseId)
-                filtered = filtered.Where(a => a.CourseId == courseId);
-
-            if (CmbFilterGroup.SelectedValue is int groupId)
-                filtered = filtered.Where(a => a.Student.GroupId == groupId);
-
-            var uiList = filtered.Select(a => new
-            {
-                AssignmentId = a.AssignmentId,
+            ListStudents.ItemsSource = filtered.Select(a => new {
+                a.AssignmentId,
                 StudentName = $"{a.Student.User.LastName} {a.Student.User.FirstName}",
                 GroupCode = a.Student.StudentGroup.GroupCode,
                 CourseName = a.Course.Name,
                 TopicTitle = a.InternshipTopic?.Title ?? "Тема не обрана",
+
                 ReportStatus = GetStatusText(a),
                 StatusColor = GetStatusColor(a)
             }).ToList();
-
-            ListStudents.ItemsSource = uiList;
         }
 
         private string GetStatusText(InternshipAssignment a)
         {
-            if (a.FinalGrade.HasValue) return "Оцінено";
-            var report = a.Reports.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
-            if (report == null) return "Без звіту";
-            return report.StatusId switch { 1 => "На перевірці", 2 => "Повернуто", 3 => "Прийнято", _ => "В процесі" };
+            var lastReport = a.Reports?.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+
+            if (lastReport == null) return "Без звіту";
+
+            if (lastReport.StatusId == 2) return "Повернуто";
+            if (lastReport.StatusId == 1) return "На перевірці";
+
+            if (a.FinalGrade.HasValue || lastReport.StatusId == 3) return "Оцінено";
+
+            return "В процесі";
         }
 
         private string GetStatusColor(InternshipAssignment a)
         {
-            if (a.FinalGrade.HasValue) return "#4CAF50";
-            var report = a.Reports.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
-            if (report == null) return "#9E9E9E";
-            if (report.StatusId == 1) return "#FF9800";
-            if (report.StatusId == 2) return "#F44336";
-            return "#2196F3";
+            var lastReport = a.Reports?.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+
+            if (lastReport == null) return "#9E9E9E"; // Сірий
+
+            if (lastReport.StatusId == 2) return "#F44336";
+
+            // Помаранчевий для "На перевірці"
+            if (lastReport.StatusId == 1) return "#FF9800";
+
+            // Зелений для "Оцінено/Прийнято"
+            if (a.FinalGrade.HasValue || lastReport.StatusId == 3) return "#4CAF50";
+
+            return "#2196F3"; // Синій (дефолт)
         }
 
         private void StudentCard_Click(object sender, MouseButtonEventArgs e)
         {
-            if (sender is Border border && border.Tag is int assignmentId)
+            if (sender is Border border && border.Tag is int aid)
             {
-                _selectedAssignment = _allAssignments.FirstOrDefault(a => a.AssignmentId == assignmentId);
-                if (_selectedAssignment != null)
-                {
-                    ShowDetails(_selectedAssignment);
-                }
+                _selectedAssignment = _allAssignments.FirstOrDefault(a => a.AssignmentId == aid);
+                if (_selectedAssignment != null) ShowDetails(_selectedAssignment);
             }
         }
 
@@ -122,51 +118,81 @@ namespace Practice.Windows
             TxtActiveTopic.Text = a.InternshipTopic?.Title ?? "-";
             TxtActiveOrg.Text = a.InternshipTopic?.Organization?.Name ?? "-";
 
-            var report = a.Reports.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+            var report = a.Reports?.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+
+            var historyList = new List<dynamic>();
+
+            if (a.Reports != null)
+            {
+                foreach (var r in a.Reports.OrderByDescending(x => x.SubmissionDate))
+                {
+                    historyList.Add(new
+                    {
+                        TimeStamp = r.SubmissionDate,
+                        Action = "Студент надіслав звіт",
+                        Details = string.IsNullOrWhiteSpace(r.StudentComment) ? "Без коментаря" : r.StudentComment
+                    });
+
+                    if (r.ReviewDate.HasValue)
+                    {
+                        string statusText = r.StatusId == 2 ? "Повернуто на доопрацювання" : (r.StatusId == 3 ? "Прийнято" : "Перевірено");
+                        historyList.Add(new
+                        {
+                            TimeStamp = r.ReviewDate.Value,
+                            Action = statusText,
+                            Details = r.SupervisorFeedback ?? "-"
+                        });
+                    }
+                }
+            }
+            ListHistory.ItemsSource = historyList.OrderByDescending(x => x.TimeStamp).ToList();
+
 
             if (report != null)
             {
-                TxtReportDate.Text = "Дата: " + report.SubmissionDate.ToString("dd.MM.yyyy HH:mm");
+                TxtReportDate.Text = report.SubmissionDate.ToString("dd.MM.yyyy HH:mm");
                 TxtStudentComment.Text = report.StudentComment;
-                TxtStudentLink.Text = report.Attachments.FirstOrDefault(at => at.FileType == "URL")?.FilePath ?? "Немає посилання";
 
-                ListAttachments.ItemsSource = report.Attachments.Where(at => at.FileType != "URL").ToList();
+                var linkAttach = report.Attachments?.FirstOrDefault(f => f.FileType == "URL");
+                TxtStudentLink.Text = linkAttach != null ? linkAttach.FilePath : "-";
+
+                ListAttachments.ItemsSource = report.Attachments?.Where(f => f.FileType != "URL").ToList();
                 TxtSupervisorFeedback.Text = report.SupervisorFeedback;
 
+                CmbReportStatus.SelectedIndex = -1;
                 foreach (ComboBoxItem item in CmbReportStatus.Items)
                 {
-                    if (item.Tag.ToString() == report.StatusId.ToString())
+                    if (item.Tag != null && item.Tag.ToString() == report.StatusId.ToString())
                     {
                         CmbReportStatus.SelectedItem = item;
                         break;
                     }
                 }
-                UpdateTimeline(true, true, a.FinalGrade.HasValue);
             }
             else
             {
-                TxtReportDate.Text = "Звіт ще не подано";
+                TxtReportDate.Text = "Не подано";
                 TxtStudentComment.Text = "-";
                 TxtStudentLink.Text = "-";
                 ListAttachments.ItemsSource = null;
-                TxtSupervisorFeedback.Text = "";
+                TxtSupervisorFeedback.Clear();
                 CmbReportStatus.SelectedIndex = -1;
-                UpdateTimeline(true, false, false);
             }
 
             TxtFinalGrade.Text = a.FinalGrade?.ToString() ?? "";
+            TxtCompanyGrade.Text = a.CompanyGrade?.ToString() ?? "";
+            TxtCompanyFeedback.Text = a.CompanyFeedback ?? "";
+
+            UpdateTimeline(true, report != null, a.FinalGrade.HasValue);
         }
 
-        private void UpdateTimeline(bool step1, bool step2, bool step3)
+        private void UpdateTimeline(bool s1, bool s2, bool s3)
         {
-            var green = (Brush)new BrushConverter().ConvertFrom("#4CAF50");
-            var gray = (Brush)new BrushConverter().ConvertFrom("#DDD");
-
-            Step1Circle.Background = step1 ? green : gray;
-            Line1.Fill = step1 ? green : gray;
-            Step2Circle.Background = step2 ? green : gray;
-            Line2.Fill = step2 ? green : gray;
-            Step3Circle.Background = step3 ? green : gray;
+            var g = (Brush)new BrushConverter().ConvertFrom("#4CAF50");
+            var gr = (Brush)new BrushConverter().ConvertFrom("#DDD");
+            Step1Circle.Background = s1 ? g : gr; Line1.Fill = s1 ? g : gr;
+            Step2Circle.Background = s2 ? g : gr; Line2.Fill = s2 ? g : gr;
+            Step3Circle.Background = s3 ? g : gr;
         }
 
         private async void BtnSaveAssessment_Click(object sender, RoutedEventArgs e)
@@ -175,21 +201,37 @@ namespace Practice.Windows
             try
             {
                 string feedback = TxtSupervisorFeedback.Text;
-                int? grade = null;
-                if (int.TryParse(TxtFinalGrade.Text, out int g)) grade = g;
+                string companyFeedback = TxtCompanyFeedback.Text;
+
+                int? finalGrade = int.TryParse(TxtFinalGrade.Text, out int fg) ? fg : (int?)null;
+                int? companyGrade = int.TryParse(TxtCompanyGrade.Text, out int cg) ? cg : (int?)null;
 
                 int? statusId = null;
-                if (CmbReportStatus.SelectedItem is ComboBoxItem item)
+                if (CmbReportStatus.SelectedItem is ComboBoxItem item && item.Tag != null)
+                {
                     statusId = int.Parse(item.Tag.ToString());
+                }
 
-                await _supervisorService.SaveAssessmentAsync(_selectedAssignment.AssignmentId, feedback, grade, statusId);
+                await _supervisorService.SaveAssessmentAsync(
+                    _selectedAssignment.AssignmentId,
+                    feedback,
+                    finalGrade,
+                    statusId,
+                    companyGrade,
+                    companyFeedback
+                );
+
                 MessageBox.Show("Зміни збережено!");
+
                 await LoadData();
 
                 _selectedAssignment = _allAssignments.First(a => a.AssignmentId == _selectedAssignment.AssignmentId);
                 ShowDetails(_selectedAssignment);
             }
-            catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка збереження: " + ex.Message);
+            }
         }
 
         private void BtnOpenFile_Click(object sender, RoutedEventArgs e)
@@ -202,7 +244,16 @@ namespace Practice.Windows
         }
 
         private void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e) => RenderList();
-        private void BtnResetFilters_Click(object sender, RoutedEventArgs e) { CmbFilterCourse.SelectedIndex = -1; CmbFilterGroup.SelectedIndex = -1; RenderList(); }
-        private void BtnLogout_Click(object sender, RoutedEventArgs e) { new LoginWindow().Show(); Close(); }
+        private void BtnResetFilters_Click(object sender, RoutedEventArgs e) 
+        { 
+            CmbFilterCourse.SelectedIndex = -1; 
+            CmbFilterGroup.SelectedIndex = -1; 
+            RenderList(); 
+        }
+        private void BtnLogout_Click(object sender, RoutedEventArgs e) 
+        { 
+            new LoginWindow().Show(); 
+            Close(); 
+        }
     }
 }

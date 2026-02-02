@@ -13,11 +13,14 @@ namespace Practice.Repositories.Implementations
         public CourseRepository(AppDbContext context) : base(context)
         {
         }
-        public async Task<IEnumerable<Course>> GetActiveCoursesAsync()
+        public async Task<IEnumerable<Course>> GetAllActiveCoursesAsync()
         {
-            return await _dbSet
+            return await _context.Courses
                 .Where(c => c.IsActive)
                 .Include(c => c.Discipline)
+                .Include(c => c.Supervisor).ThenInclude(s => s.User)
+                .Include(c => c.CourseEnrollments)       
+                    .ThenInclude(e => e.StudentGroup)   
                 .ToListAsync();
         }
         public async Task<IEnumerable<Course>> GetAllActiveAsync()
@@ -27,6 +30,16 @@ namespace Practice.Repositories.Implementations
                 .Include(c => c.Discipline)
                 .Include(c => c.Supervisor).ThenInclude(s => s.User)
                 .Where(c => c.IsActive)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Course>> GetActiveCoursesAsync()
+        {
+            return await _context.Courses
+                .Where(c => c.IsActive)
+                .Include(c => c.Discipline)
+                .Include(c => c.Supervisor).ThenInclude(s => s.User)
+                .Include(c => c.CourseEnrollments)
+                    .ThenInclude(e => e.StudentGroup)
                 .ToListAsync();
         }
     }

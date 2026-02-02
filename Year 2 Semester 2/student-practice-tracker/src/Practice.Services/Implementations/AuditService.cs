@@ -1,10 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Practice.Data.Entities;
+﻿using Practice.Data.Entities;
 using Practice.Repositories.Interfaces;
 using Practice.Services.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq; 
 using System.Threading.Tasks;
 
 namespace Practice.Services.Implementations
@@ -18,25 +16,33 @@ namespace Practice.Services.Implementations
             _auditRepo = auditRepo;
         }
 
-        public async Task LogActionAsync(int? userId, string action, string details, string entityName, int entityId)
+        public async Task LogActionAsync(int? userId, string action, string details, string entityName = null, int? entityId = null)
         {
-            var log = new AuditLog
+            try
             {
-                UserId = userId,
-                Action = action,
-                Details = details,
-                EntityAffected = entityName,
-                EntityId = entityId,
-                TimeStamp = DateTime.UtcNow
-            };
-            _auditRepo.Add(log);
-            await _auditRepo.SaveAsync();
+                var log = new AuditLog
+                {
+                    UserId = userId,
+                    Action = action,
+                    Details = details ?? "",
+
+                    EntityAffected = entityName ?? "System",
+
+                    EntityId = entityId,
+                    TimeStamp = DateTime.UtcNow
+                };
+
+                _auditRepo.Add(log);
+                await _auditRepo.SaveAsync();
+            }
+            catch
+            {
+            }
         }
 
         public async Task<List<AuditLog>> GetAllLogsAsync()
         {
-            var logs = await _auditRepo.GetAllAsync();
-            return logs.OrderByDescending(x => x.TimeStamp).ToList();
+            return await _auditRepo.GetAllWithDetailsAsync();
         }
     }
 }
