@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace Practice.Windows
 {
@@ -1037,6 +1038,53 @@ namespace Practice.Windows
                     .ToList();
 
                 CmbReportGroup.ItemsSource = uniqueGroups;
+            }
+        }
+        private async void BtnGlobalExcelReport_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 1. Відкриваємо діалог збереження файлу
+                var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    FileName = $"Зведений_звіт_практика_{DateTime.Now:yyyy-MM-dd}",
+                    DefaultExt = ".xlsx",
+                    Filter = "Excel Worksheets (.xlsx)|*.xlsx"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // Змінюємо курсор на "очікування"
+                    this.Cursor = Cursors.Wait;
+
+                    // 2. Викликаємо метод сервісу
+                    // Він сам згрупує дані по аркушах, як ми написали раніше
+                    await _reportingService.GenerateExcelStatusReportAsync(saveFileDialog.FileName);
+
+                    this.Cursor = Cursors.Arrow;
+
+                    // 3. Питаємо користувача, чи хоче він відкрити файл
+                    var result = MessageBox.Show(
+                        "Excel-звіт успішно створено! Бажаєте відкрити його зараз?",
+                        "Успішне формування",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Information);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        // Відкриваємо файл стандартною програмою (Excel)
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = saveFileDialog.FileName,
+                            UseShellExecute = true
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.Cursor = Cursors.Arrow;
+                MessageBox.Show($"Виникла помилка: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

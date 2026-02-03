@@ -147,7 +147,7 @@ namespace Practice.Services.Implementations
             var course = await _courseService.GetCourseByIdAsync(courseId);
 
             string supervisorName = course?.Supervisor?.User != null
-                ? $"{course.Supervisor.User.LastName} {course.Supervisor.User.FirstName}"
+                ? $"{course.Supervisor.User.LastName} {course.Supervisor.User.FirstName[0]}."
                 : "Не призначено";
 
             Document.Create(container =>
@@ -158,33 +158,31 @@ namespace Practice.Services.Implementations
                     page.Margin(1.5f, Unit.Centimetre);
                     page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
 
-                    // ЗАГОЛОВОК
                     page.Header().Column(col =>
                     {
-                        col.Item().AlignCenter().Text("Відомість результатів навчальної практики").FontSize(18).SemiBold();
-                        col.Item().PaddingTop(5).AlignCenter().Text($"Група: {group?.GroupCode} | Рік: {DateTime.Now.Year}");
-                        col.Item().AlignCenter().Text($"Керівник практики: {supervisorName}");
-                        col.Item().PaddingBottom(10).LineHorizontal(1);
+                        col.Item().AlignCenter().Text("Відомість результатів навчальної практики").FontSize(16).SemiBold();
+                        col.Item().PaddingTop(2).AlignCenter().Text($"Група: {group?.GroupCode} | {DateTime.Now.Year} рік");
+                        col.Item().PaddingBottom(5).BorderBottom(1).BorderColor(QuestPDF.Helpers.Colors.Black);
                     });
 
                     page.Content().PaddingTop(10).Column(col =>
                     {
-                        
+                        // 1. ТАБЛИЦЯ (5 колонок)
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
                             {
-                                columns.ConstantColumn(25);  // №
+                                columns.ConstantColumn(30);  // №
                                 columns.RelativeColumn(3);   // ПІБ
-                                columns.RelativeColumn(4);   // Тема (розширили з 3 до 4)
-                                columns.RelativeColumn(3);   // Організація (розширили з 2 до 3)
+                                columns.RelativeColumn(4);   // Тема
+                                columns.RelativeColumn(3);   // Організація
                                 columns.ConstantColumn(50);  // Оцінка
                             });
 
                             table.Header(header =>
                             {
                                 header.Cell().Element(CellStyle).AlignCenter().Text("№");
-                                header.Cell().Element(CellStyle).AlignCenter().Text("ПІБ Студента");
+                                header.Cell().Element(CellStyle).Text("ПІБ Студента");
                                 header.Cell().Element(CellStyle).AlignCenter().Text("Тема практики");
                                 header.Cell().Element(CellStyle).AlignCenter().Text("Організація");
                                 header.Cell().Element(CellStyle).AlignCenter().Text("Оцінка");
@@ -194,7 +192,7 @@ namespace Practice.Services.Implementations
                             });
 
                             int i = 1;
-                            foreach (var a in assignments.Where(x => x.Student.GroupId == groupId))
+                            foreach (var a in assignments.Where(x => x.Student.GroupId == groupId).OrderBy(x => x.Student.User.LastName))
                             {
                                 table.Cell().Element(RowStyle).AlignCenter().Text(i++.ToString());
                                 table.Cell().Element(RowStyle).Text($"{a.Student?.User?.LastName} {a.Student?.User?.FirstName}");
@@ -207,18 +205,24 @@ namespace Practice.Services.Implementations
                             }
                         });
 
-                        // ОФІЦІЙНИЙ ПІДПИС ВНИЗУ
-                        col.Item().PaddingTop(30).Row(row =>
+                        col.Item().PaddingTop(30).ShowEntire().Row(row =>
                         {
-                            row.RelativeItem().AlignRight().PaddingRight(10).Text("Керівник практики від кафедри:");
-                            row.ConstantColumn(150).BorderBottom(1).AlignCenter().Text(supervisorName);
+                            row.AutoItem().Text("Керівник практики від кафедри:");
+
+                            row.RelativeItem();
+
+                            row.ConstantColumn(80).PaddingHorizontal(5).PaddingBottom(2).BorderBottom(1).AlignBottom();
+
+                            row.AutoItem().MinWidth(100).Text(supervisorName).SemiBold();
                         });
                     });
 
-                    page.Footer().AlignRight().Text(x =>
+                    page.Footer().AlignCenter().Text(x =>
                     {
-                        x.Span("Дата формування: ");
-                        x.Span(DateTime.Now.ToString("dd.MM.yyyy"));
+                        x.Span("Сторінка ");
+                        x.CurrentPageNumber();
+                        x.Span(" з ");
+                        x.TotalPages();
                     });
                 });
             }).GeneratePdf(filePath);

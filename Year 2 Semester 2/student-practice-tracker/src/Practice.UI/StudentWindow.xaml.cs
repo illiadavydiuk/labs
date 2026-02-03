@@ -281,7 +281,6 @@ namespace Practice.Windows
         {
             try
             {
-                // 1. Відправляємо звіт у базу
                 await _studentService.SubmitAssignmentAsync(
                     _currentAssignment.AssignmentId,
                     TxtReportComment.Text,
@@ -290,11 +289,8 @@ namespace Practice.Windows
 
                 MessageBox.Show("Роботу успішно здано!");
 
-                // 2. Очищаємо тимчасові шляхи
                 _tempFilePaths.Clear();
 
-                // 3. ВИПРАВЛЕНО: Замість ручної зміни одного поля, викликаємо повне оновлення
-                // Це змусить сервіс заново вичитати Assignment разом із новим Report з бази
                 RefreshAllData();
             }
             catch (Exception ex)
@@ -381,12 +377,11 @@ namespace Practice.Windows
 
                 currentList.Add(new Attachment
                 {
-                    AttachmentId = 0, // 0 означає, що він ще не збережений
+                    AttachmentId = 0, 
                     FileName = System.IO.Path.GetFileName(path),
                     FilePath = path
                 });
 
-                // Оновлюємо ListBox
                 ListAttachments.ItemsSource = null;
                 ListAttachments.ItemsSource = currentList;
             }
