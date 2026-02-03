@@ -108,15 +108,12 @@ namespace Practice.Repositories.Implementations
         {
             return await _context.InternshipAssignments
                 .AsNoTracking()
-                .AsSplitQuery() // <--- ТУТ ТЕЖ
-                .Include(a => a.Student).ThenInclude(s => s.User)
-                .Include(a => a.Student).ThenInclude(s => s.StudentGroup)
-                .Include(a => a.Course).ThenInclude(c => c.Discipline)
+                .Include(a => a.Student)
+                    .ThenInclude(s => s.User)
                 .Include(a => a.InternshipTopic)
-                .Include(a => a.AssignmentStatus)
-                .Include(a => a.Reports).ThenInclude(r => r.Attachments) // Файли
+                .Include(a => a.Reports) 
+                    .ThenInclude(r => r.ReportStatus) 
                 .Where(a => a.SupervisorId == supervisorId)
-                .OrderByDescending(a => a.StartDate)
                 .ToListAsync();
         }
     }

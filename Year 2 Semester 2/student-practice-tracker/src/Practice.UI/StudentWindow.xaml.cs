@@ -172,6 +172,7 @@ namespace Practice.Windows
                 }
 
                 LoadAttachments(_currentAssignment.AssignmentId);
+                LoadFormattedHistory();
             }
         }
 
@@ -219,7 +220,6 @@ namespace Practice.Windows
                         status = "💬 КОМЕНТАР ВИКЛАДАЧА";
                     }
 
-                    // Додаємо запис, якщо це не просто порожня перевірка
                     historyItems.Add(new
                     {
                         TimeStamp = r.ReviewDate ?? r.SubmissionDate.AddMinutes(5), // Якщо дати немає, беремо приблизну
@@ -281,19 +281,21 @@ namespace Practice.Windows
         {
             try
             {
-                // Передаємо ID, Коментар, і ТЕПЕР СПИСОК ФАЙЛІВ
+                // 1. Відправляємо звіт у базу
                 await _studentService.SubmitAssignmentAsync(
                     _currentAssignment.AssignmentId,
                     TxtReportComment.Text,
-                    _tempFilePaths 
+                    _tempFilePaths
                 );
 
                 MessageBox.Show("Роботу успішно здано!");
 
+                // 2. Очищаємо тимчасові шляхи
                 _tempFilePaths.Clear();
 
-                _currentAssignment.StatusId = 2;
-                UpdateUIState();
+                // 3. ВИПРАВЛЕНО: Замість ручної зміни одного поля, викликаємо повне оновлення
+                // Це змусить сервіс заново вичитати Assignment разом із новим Report з бази
+                RefreshAllData();
             }
             catch (Exception ex)
             {

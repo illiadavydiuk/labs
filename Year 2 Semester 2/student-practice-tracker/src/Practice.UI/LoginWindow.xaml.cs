@@ -18,6 +18,7 @@ namespace Practice
         private readonly IStudentService _studentService;
         private readonly ISupervisorService _supervisorService;
         private readonly IAuditService _auditService;
+        private readonly IReportingService _reportingService;
 
         public LoginWindow()
         {
@@ -48,6 +49,8 @@ namespace Practice
 
             _auditService = new AuditService(auditRepo);
 
+            _reportingService = new ReportingService(assignRepo, groupRepo);
+
             _identityService = new IdentityService(userRepo, studentRepo, supervisorRepo, groupRepo, deptRepo, _auditService);
 
             _adminService = new AdminService(_auditService, studentRepo, userRepo, supervisorRepo, specRepo, groupRepo, deptRepo, posRepo, discRepo, orgRepo);
@@ -68,6 +71,7 @@ namespace Practice
             );
 
             _supervisorService = new SupervisorService(supervisorRepo, assignRepo, reportRepo, _context);
+
         }
 
         private async void BtnLogin_Click(object sender, RoutedEventArgs e)
@@ -96,7 +100,7 @@ namespace Practice
                     switch (user.Role.RoleName)
                     {
                         case "Admin":
-                            nextWindow = new AdminWindow(user, _adminService, _identityService, _practiceService, _courseService, _auditService);
+                            nextWindow = new AdminWindow(user, _adminService, _identityService, _practiceService, _courseService, _auditService, _reportingService);
                             break;
                         case "Student":
                             nextWindow = new StudentWindow(user, _studentService);

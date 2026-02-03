@@ -1,16 +1,16 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using Practice.Data.Entities;
+using Practice.Services.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Practice.Data.Entities;
-using Practice.Services.Interfaces;
 
 namespace Practice.Windows
 {
-    // Модель для відображення рядків імпорту
     public class StudentImportModel
     {
         public string FirstName { get; set; }
@@ -19,12 +19,11 @@ namespace Practice.Windows
         public string RecordBook { get; set; }
     }
 
-    // Модель для простих списків (Посади, Дисципліни)
     public class SimpleItemViewModel
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; } // "Position" або "Discipline"
+        public string Type { get; set; } 
     }
 
     public partial class AdminWindow : Window
@@ -35,10 +34,11 @@ namespace Practice.Windows
         private readonly IPracticeService _practiceService;
         private readonly ICourseService _courseService;
         private readonly IAuditService _auditService;
+        private readonly IReportingService _reportingService;
 
         private List<AuditLog> _allLogs = new List<AuditLog>();
         private int _editingId;
-        private object _editingItem; // Зберігає об'єкт, який редагуємо (Specialty, Group тощо)
+        private object _editingItem; 
 
         private List<Course> _cachedCourses = new List<Course>();
         private string _currentSimpleMode = "Position"; 
@@ -49,7 +49,8 @@ namespace Practice.Windows
             IIdentityService identityService,
             IPracticeService practiceService,
             ICourseService courseService,
-            IAuditService auditService)
+            IAuditService auditService,
+            IReportingService reportingService)
         {
             InitializeComponent();
             _currentUser = user;
@@ -58,6 +59,7 @@ namespace Practice.Windows
             _practiceService = practiceService;
             _courseService = courseService;
             _auditService = auditService;
+            _reportingService = reportingService;
 
             if (TxtAdminName != null)
                 TxtAdminName.Text = $"{_currentUser.LastName} {_currentUser.FirstName}";
@@ -65,6 +67,7 @@ namespace Practice.Windows
                 TxtInitials.Text = (!string.IsNullOrEmpty(_currentUser.FirstName) ? _currentUser.FirstName[0].ToString() : "A");
 
             LoadAllData();
+            this._reportingService = reportingService;
         }
 
         private void LoadAllData()
@@ -96,12 +99,18 @@ namespace Practice.Windows
                 var disciplines = await _courseService.GetAllDisciplinesAsync();
                 var orgs = await _practiceService.GetAllOrganizationsAsync();
 
+                // Отримуємо список активних курсів (для звітів та фільтрів)
+                var activeCourses = await _courseService.GetAllActiveCoursesAsync();
+
                 CmbStudGroup.ItemsSource = groups;
                 CmbImportGroup.ItemsSource = groups;
                 CmbFilterGroup.ItemsSource = groups;
                 EditStudGroup.ItemsSource = groups;
                 CmbCourseFilterGroup.ItemsSource = groups;
                 CmbEnrollGroup.ItemsSource = groups;
+
+                CmbReportGroup.ItemsSource = groups;
+                CmbReportCourse.ItemsSource = activeCourses;
 
                 CmbSupDept.ItemsSource = depts;
                 CmbFilterDept.ItemsSource = depts;
@@ -126,9 +135,9 @@ namespace Practice.Windows
                 EditTopicOrg.ItemsSource = orgs;
 
                 ReloadCourseSupervisors();
-                ReloadActiveCourses();
 
-                // Прив'язка до DataGrids структури
+                CmbReportCourse.ItemsSource = activeCourses;
+
                 GridSpecialties.ItemsSource = specs;
                 GridGroups.ItemsSource = groups;
                 GridDepartments.ItemsSource = depts;
@@ -345,7 +354,7 @@ namespace Practice.Windows
             PanelImport.Visibility = Visibility.Collapsed;
             GridImportPreview.ItemsSource = null;
             TxtRawNames.Clear();
-
+            CmbFilterGroup.SelectedValue = groupId;
             RefreshStudentList(groupId);
             LoadLogs();
         }
@@ -397,16 +406,13 @@ namespace Practice.Windows
                     RoleId = 3 
                 };
 
-                // 3. Реєстрація
                 await _identityService.RegisterSupervisorAsync(u, TxtSupPass.Text, deptId, posId, TxtSupPhone.Text);
 
                 MessageBox.Show("Керівника додано!");
 
-                // 4. Оновлення списків
                 RefreshSupervisorList((int?)CmbFilterDept.SelectedValue);
-                ReloadCourseSupervisors(); // Оновити випадайку в курсах (Пункт 5)
+                ReloadCourseSupervisors(); 
 
-                // 5. Логування (Пункт 6 - пишемо нормальні деталі)
                 LoadLogs();
             }
             catch (Exception ex)
@@ -899,7 +905,6 @@ namespace Practice.Windows
                 {
                     await _courseService.DeleteCourseAsync(id);
 
-                    // ЯВНИЙ запис в лог з назвою
                     await _auditService.LogActionAsync(_currentUser.UserId, "Delete", $"Видалено курс: {courseName}", "Course", id);
 
                     RefreshCoursesList();
@@ -952,6 +957,52 @@ namespace Practice.Windows
         {
             new LoginWindow().Show();
             Close();
+        }
+        private async void BtnBackup_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                FileName = $"practice_backup_{DateTime.Now:yyyyMMdd}",
+                DefaultExt = ".db",
+                Filter = "SQLite Database (.db)|*.db"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                try
+                {
+                    _reportingService.CreateDatabaseBackup(dlg.FileName);
+                    MessageBox.Show("Резервна копія створена успішно!");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Помилка: {ex.Message}");
+                }
+            }
+        }
+
+        private async void BtnPdfReport_Click(object sender, RoutedEventArgs e)
+        {
+            if (CmbReportCourse.SelectedValue is int cid && CmbReportGroup.SelectedValue is int gid)
+            {
+                var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "PDF Files (.pdf)|*.pdf", FileName = "Vidomist_Praktiki" };
+                if (dlg.ShowDialog() == true)
+                {
+                    await _reportingService.GeneratePdfStatementAsync(cid, gid, dlg.FileName);
+                    MessageBox.Show("PDF звіт сформовано!");
+                }
+            }
+            else { MessageBox.Show("Оберіть курс та групу!"); }
+        }
+
+        private async void BtnExcelReport_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "Excel Files (.xlsx)|*.xlsx", FileName = "Reestr_Statusiv" };
+            if (dlg.ShowDialog() == true)
+            {
+                await _reportingService.GenerateExcelStatusReportAsync(dlg.FileName);
+                MessageBox.Show("Excel звіт збережено!");
+            }
         }
     }
 }

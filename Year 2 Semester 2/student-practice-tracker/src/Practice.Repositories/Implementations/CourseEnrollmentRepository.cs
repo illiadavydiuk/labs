@@ -18,7 +18,7 @@ namespace Practice.Repositories.Implementations
             return await _dbSet
                 .Where(e => e.CourseId == courseId)
                 .Include(e => e.Student).ThenInclude(s => s.User)
-                .Include(e => e.StudentGroup)
+                .Include(e => e.Student).ThenInclude(s => s.StudentGroup)
                 .ToListAsync();
         }
         public async Task<bool> IsEnrolledAsync(int studentId, int courseId)

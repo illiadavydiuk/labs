@@ -77,6 +77,7 @@ namespace Practice.Services.Implementations
             try
             {
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+                user.IsPasswordChangeRequired = true;
                 _userRepo.Add(user);
                 await _userRepo.SaveAsync(); 
 
@@ -104,20 +105,21 @@ namespace Practice.Services.Implementations
             }
         }
 
-    public async Task<bool> RegisterSupervisorAsync(User user, string phone, int? deptId, int? posId, string? password)
+        public async Task<bool> RegisterSupervisorAsync(User user, string? password, int? deptId, int? posId, string? phone)
         {
             if (!string.IsNullOrEmpty(password))
             {
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+                user.IsPasswordChangeRequired = true; // Це активує вікно зміни пароля
             }
 
             _userRepo.Add(user);
-            await _userRepo.SaveAsync();
+            await _userRepo.SaveAsync(); 
 
             var supervisor = new Supervisor
             {
                 UserId = user.UserId,
-                Phone = phone,
+                Phone = phone, 
                 DepartmentId = deptId ?? 0,
                 PositionId = posId
             };
@@ -126,10 +128,8 @@ namespace Practice.Services.Implementations
             await _supervisorRepo.SaveAsync();
 
             await _auditService.LogActionAsync(user.UserId, AuditActions.UserCreated, $"Викладач: {user.Email}", "Supervisor", supervisor.SupervisorId);
-
             return true;
         }
-
 
         public async Task<IEnumerable<StudentGroup>> GetAllGroupsAsync()
         {
