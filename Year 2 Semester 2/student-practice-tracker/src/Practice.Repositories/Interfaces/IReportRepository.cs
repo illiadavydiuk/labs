@@ -7,6 +7,8 @@ namespace Practice.Repositories.Interfaces
 {
     public interface IReportRepository : IRepository<Report>
     {
-        Task<IEnumerable<Report>> GetByAssignmentIdAsync(int assignmentId);
+        Task<List<Report>> GetReportsByAssignmentIdAsync(int assignmentId);
+        Task AddAsync(Report report);
+        Task SaveAsync();
     }
 }

@@ -16,15 +16,15 @@ namespace Practice.Repositories.Implementations
         public async Task<Student> GetStudentDetailsAsync(int studentId)
         {
             return await _dbSet
-                .Include(s => s.User)        // ПІБ та Email
-                .Include(s => s.StudentGroup) // Шифр групи
+                .Include(s => s.User)        
+                .Include(s => s.StudentGroup) 
                 .FirstOrDefaultAsync(s => s.StudentId == studentId);
         }
         public async Task<Student> GetByUserIdAsync(int userId)
         {
             return await _context.Students
                 .Include(s => s.User)
-                .Include(s => s.StudentGroup) // Підтягуємо групу
+                .Include(s => s.StudentGroup) 
                 .FirstOrDefaultAsync(s => s.UserId == userId);
         }
         public async Task<IEnumerable<Student>> GetStudentsByGroupAsync(int? groupId)
@@ -55,6 +55,13 @@ namespace Practice.Repositories.Implementations
                 .Select(ce => ce.Course)
                 .Distinct()
                 .ToListAsync();
+        }
+        public async Task<Student> GetByEmailAsync(string email)
+        {
+            return await _context.Students
+                .Include(s => s.User)       
+                .Include(s => s.StudentGroup) 
+                .FirstOrDefaultAsync(s => s.User.Email == email);
         }
     }
 }

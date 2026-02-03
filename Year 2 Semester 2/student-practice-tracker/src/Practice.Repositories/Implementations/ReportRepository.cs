@@ -13,13 +13,23 @@ namespace Practice.Repositories.Implementations
         public ReportRepository(AppDbContext context) : base(context)
         {
         }
-        public async Task<IEnumerable<Report>> GetByAssignmentIdAsync(int assignmentId)
+        public async Task<List<Report>> GetReportsByAssignmentIdAsync(int assignmentId)
         {
-            return await _dbSet
+            return await _context.Reports
                 .Where(r => r.AssignmentId == assignmentId)
-                .Include(r => r.ReportStatus) // Зв'язок з ReportStatus 
-                .Include(r => r.Attachments)  // Список файлів 
+                .Include(r => r.Attachments) 
+                .OrderByDescending(r => r.SubmissionDate) 
                 .ToListAsync();
+        }
+
+        public async Task AddAsync(Report report)
+        {
+            await _context.Reports.AddAsync(report);
+        }
+
+        public async Task SaveAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }

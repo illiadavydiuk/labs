@@ -45,68 +45,79 @@ namespace Practice.Repositories.Implementations
         public async Task<IEnumerable<InternshipAssignment>> GetBySupervisorWithDetailsAsync(int supervisorId)
         {
             return await _dbSet
-                .Include(a => a.Student).ThenInclude(s => s.User)       // Ім'я студента
-                .Include(a => a.Student).ThenInclude(s => s.StudentGroup) // Група
-                .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization) // Тема
+                .Include(a => a.Student).ThenInclude(s => s.User)       
+                .Include(a => a.Student).ThenInclude(s => s.StudentGroup)
+                .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization) 
                 .Include(a => a.Course)
-                .Include(a => a.Reports) // Для статусу
+                .Include(a => a.Reports)
                 .Where(a => a.SupervisorId == supervisorId)
                 .ToListAsync();
         }
 
         public async Task<InternshipAssignment?> GetByStudentAndCourseWithDetailsAsync(int studentId, int courseId)
         {
-            return await _dbSet
-                .Include(a => a.Supervisor).ThenInclude(s => s.User)
-                .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization)
-                .Include(a => a.Reports).ThenInclude(r => r.Attachments)
-                .Include(a => a.Course)
-                .FirstOrDefaultAsync(a => a.StudentId == studentId && a.CourseId == courseId);
+            return await GetByStudentAndCourseAsync(studentId, courseId);
         }
 
         public async Task<InternshipAssignment?> GetByStudentAndCourseAsync(int studentId, int courseId)
         {
             return await _context.InternshipAssignments
+                .AsNoTracking() 
+                .AsSplitQuery() 
                 .Include(a => a.Course)
                 .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization)
                 .Include(a => a.Supervisor).ThenInclude(s => s.User)
+
                 .Include(a => a.Reports).ThenInclude(r => r.Attachments)
+                .Include(a => a.Reports).ThenInclude(r => r.ReportStatus)
+
                 .Include(a => a.AssignmentStatus)
+                .OrderByDescending(a => a.StartDate)
                 .FirstOrDefaultAsync(a => a.StudentId == studentId && a.CourseId == courseId);
         }
 
         public async Task AddAssignmentWithTopicUpdateAsync(InternshipAssignment assignment, int topicId)
         {
             var topic = await _context.InternshipTopics.FindAsync(topicId);
-            if (topic != null)
-            {
-                topic.IsAvailable = false; 
-                _context.InternshipTopics.Update(topic);
-            }
+            if (topic != null) { topic.IsAvailable = false; _context.InternshipTopics.Update(topic); }
             _context.InternshipAssignments.Add(assignment);
         }
 
-        // РЕАЛІЗАЦІЯ ДРУГОГО МЕТОДУ
         public async Task UpdateAssignmentTopicAsync(InternshipAssignment assignment, int newTopicId)
         {
-            // 1. Звільняємо стару тему
             var oldTopic = await _context.InternshipTopics.FindAsync(assignment.TopicId);
-            if (oldTopic != null)
-            {
-                oldTopic.IsAvailable = true;
-                _context.InternshipTopics.Update(oldTopic);
-            }
+            if (oldTopic != null) { oldTopic.IsAvailable = true; _context.InternshipTopics.Update(oldTopic); }
 
-            // 2. Займаємо нову
             var newTopic = await _context.InternshipTopics.FindAsync(newTopicId);
-            if (newTopic != null)
-            {
-                newTopic.IsAvailable = false;
-                _context.InternshipTopics.Update(newTopic);
-            }
+            if (newTopic != null) { newTopic.IsAvailable = false; _context.InternshipTopics.Update(newTopic); }
 
             assignment.TopicId = newTopicId;
             _context.InternshipAssignments.Update(assignment);
+        }
+        public async Task<List<InternshipAssignment>> GetByStudentIdAsync(int studentId)
+        {
+            return await _context.InternshipAssignments
+                .Include(a => a.Course).ThenInclude(c => c.Discipline)
+                .Include(a => a.InternshipTopic)
+                .Include(a => a.Supervisor).ThenInclude(s => s.User)
+                .Include(a => a.AssignmentStatus)
+                .Where(a => a.StudentId == studentId)
+                .ToListAsync();
+        }
+        public async Task<List<InternshipAssignment>> GetBySupervisorIdAsync(int supervisorId)
+        {
+            return await _context.InternshipAssignments
+                .AsNoTracking()
+                .AsSplitQuery() // <--- ТУТ ТЕЖ
+                .Include(a => a.Student).ThenInclude(s => s.User)
+                .Include(a => a.Student).ThenInclude(s => s.StudentGroup)
+                .Include(a => a.Course).ThenInclude(c => c.Discipline)
+                .Include(a => a.InternshipTopic)
+                .Include(a => a.AssignmentStatus)
+                .Include(a => a.Reports).ThenInclude(r => r.Attachments) // Файли
+                .Where(a => a.SupervisorId == supervisorId)
+                .OrderByDescending(a => a.StartDate)
+                .ToListAsync();
         }
     }
 }

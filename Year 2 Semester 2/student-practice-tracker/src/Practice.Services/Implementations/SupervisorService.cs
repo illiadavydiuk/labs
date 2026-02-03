@@ -37,11 +37,13 @@ namespace Practice.Services.Implementations
         public async Task<List<InternshipAssignment>> GetStudentsForSupervisorAsync(int supervisorId)
         {
             return await _context.InternshipAssignments
+                .AsNoTracking() 
                 .Include(a => a.Student).ThenInclude(s => s.User)
                 .Include(a => a.Student).ThenInclude(s => s.StudentGroup)
                 .Include(a => a.Course)
                 .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization)
                 .Include(a => a.Reports)
+                    .ThenInclude(r => r.Attachments)
                 .Where(a => a.SupervisorId == supervisorId || a.Course.SupervisorId == supervisorId)
                 .ToListAsync();
         }
@@ -49,17 +51,21 @@ namespace Practice.Services.Implementations
         public async Task<InternshipAssignment?> GetAssignmentDetailsAsync(int assignmentId)
         {
             return await _context.InternshipAssignments
+                .AsNoTracking()
                 .Include(a => a.Student).ThenInclude(s => s.User)
                 .Include(a => a.Student).ThenInclude(s => s.StudentGroup)
                 .Include(a => a.Course)
                 .Include(a => a.InternshipTopic).ThenInclude(t => t.Organization)
                 .Include(a => a.Reports)
+                    .ThenInclude(r => r.Attachments)
                 .FirstOrDefaultAsync(a => a.AssignmentId == assignmentId);
         }
-
         public async Task SaveAssessmentAsync(int assignmentId, string feedback, int? finalGrade, int? reportStatusId, int? companyGrade, string companyFeedback)
         {
-            var assignment = await _assignRepo.GetByIdAsync(assignmentId);
+            var assignment = await _context.InternshipAssignments
+                .Include(a => a.Reports)
+                .FirstOrDefaultAsync(a => a.AssignmentId == assignmentId);
+
             if (assignment == null) return;
 
             assignment.FinalGrade = finalGrade;
@@ -68,20 +74,32 @@ namespace Practice.Services.Implementations
 
             if (reportStatusId.HasValue)
             {
-                var reports = await _reportRepo.GetAllAsync();
-                var lastReport = reports.Where(r => r.AssignmentId == assignmentId).OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+                var lastReport = assignment.Reports?
+                    .OrderByDescending(r => r.SubmissionDate)
+                    .FirstOrDefault();
 
                 if (lastReport != null)
                 {
                     lastReport.StatusId = reportStatusId.Value;
                     lastReport.SupervisorFeedback = feedback;
                     lastReport.ReviewDate = DateTime.Now;
-                    _reportRepo.Update(lastReport);
+
+                    if (reportStatusId.Value == 3)
+                    {
+                        assignment.StatusId = 3;
+                    }
+                    else if (reportStatusId.Value == 2)
+                    {
+                        assignment.StatusId = 2;
+                    }
                 }
             }
 
-            _assignRepo.Update(assignment);
-            await _assignRepo.SaveAsync();
+            await _context.SaveChangesAsync();
+        }
+        public async Task<List<InternshipAssignment>> GetMyStudentsAssignmentsAsync(int supervisorId)
+        {
+            return await _assignRepo.GetBySupervisorIdAsync(supervisorId);
         }
     }
 }

@@ -1,15 +1,16 @@
-﻿using Practice.Data.Entities;
-using Practice.Services.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using Practice.Data.Entities;
+using Practice.Services.Interfaces;
 
 namespace Practice.Windows
 {
+    // Модель для відображення рядків імпорту
     public class StudentImportModel
     {
         public string FirstName { get; set; }
@@ -18,11 +19,12 @@ namespace Practice.Windows
         public string RecordBook { get; set; }
     }
 
+    // Модель для простих списків (Посади, Дисципліни)
     public class SimpleItemViewModel
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; }
+        public string Type { get; set; } // "Position" або "Discipline"
     }
 
     public partial class AdminWindow : Window
@@ -36,10 +38,10 @@ namespace Practice.Windows
 
         private List<AuditLog> _allLogs = new List<AuditLog>();
         private int _editingId;
-        private object _editingItem;
+        private object _editingItem; // Зберігає об'єкт, який редагуємо (Specialty, Group тощо)
 
         private List<Course> _cachedCourses = new List<Course>();
-        private string _currentSimpleMode = "Position";
+        private string _currentSimpleMode = "Position"; 
 
         public AdminWindow(
             User user,
@@ -59,7 +61,6 @@ namespace Practice.Windows
 
             if (TxtAdminName != null)
                 TxtAdminName.Text = $"{_currentUser.LastName} {_currentUser.FirstName}";
-
             if (TxtInitials != null)
                 TxtInitials.Text = (!string.IsNullOrEmpty(_currentUser.FirstName) ? _currentUser.FirstName[0].ToString() : "A");
 
@@ -95,7 +96,6 @@ namespace Practice.Windows
                 var disciplines = await _courseService.GetAllDisciplinesAsync();
                 var orgs = await _practiceService.GetAllOrganizationsAsync();
 
-                // Groups
                 CmbStudGroup.ItemsSource = groups;
                 CmbImportGroup.ItemsSource = groups;
                 CmbFilterGroup.ItemsSource = groups;
@@ -103,7 +103,6 @@ namespace Practice.Windows
                 CmbCourseFilterGroup.ItemsSource = groups;
                 CmbEnrollGroup.ItemsSource = groups;
 
-                // Departments
                 CmbSupDept.ItemsSource = depts;
                 CmbFilterDept.ItemsSource = depts;
                 EditSupDept.ItemsSource = depts;
@@ -112,20 +111,16 @@ namespace Practice.Windows
                 EditStructDept.ItemsSource = depts;
                 CmbOrgDeptSource.ItemsSource = depts;
 
-                // Positions
                 CmbSupPos.ItemsSource = positions;
                 EditSupPos.ItemsSource = positions;
 
-                // Disciplines
                 CmbCourseDiscipline.ItemsSource = disciplines;
                 CmbTopicDiscipline.ItemsSource = disciplines;
                 EditCourseDiscipline.ItemsSource = disciplines;
 
-                // Specialties
                 CmbSpecForGroup.ItemsSource = specs;
                 EditStructSpec.ItemsSource = specs;
 
-                // Organizations
                 CmbOrganizations.ItemsSource = orgs;
                 CmbFilterTopicOrg.ItemsSource = orgs;
                 EditTopicOrg.ItemsSource = orgs;
@@ -133,6 +128,7 @@ namespace Practice.Windows
                 ReloadCourseSupervisors();
                 ReloadActiveCourses();
 
+                // Прив'язка до DataGrids структури
                 GridSpecialties.ItemsSource = specs;
                 GridGroups.ItemsSource = groups;
                 GridDepartments.ItemsSource = depts;
@@ -186,7 +182,6 @@ namespace Practice.Windows
             }
         }
 
-        // === СТУДЕНТИ ===
         private async void RefreshStudentList(int? groupId = null) =>
             GridAllStudents.ItemsSource = new ObservableCollection<Student>(await _adminService.GetStudentsByGroupAsync(groupId));
 
@@ -261,19 +256,112 @@ namespace Practice.Windows
         private void BtnCancelEditStudent_Click(object sender, RoutedEventArgs e) =>
             ModalEditStudent.Visibility = Visibility.Collapsed;
 
-        // === ІМПОРТ ===
         private void BtnToggleImport_Click(object sender, RoutedEventArgs e) =>
             PanelImport.Visibility = (PanelImport.Visibility == Visibility.Visible) ? Visibility.Collapsed : Visibility.Visible;
 
         private void BtnCancelImport_Click(object sender, RoutedEventArgs e) =>
             PanelImport.Visibility = Visibility.Collapsed;
 
-        private void BtnProcessImport_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Функція в розробці");
+        private void BtnProcessImport_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (CmbImportGroup.SelectedValue == null)
+                {
+                    MessageBox.Show("Спочатку оберіть групу!");
+                    return;
+                }
 
-        private void BtnSaveImport_Click(object sender, RoutedEventArgs e) { }
+                var lines = TxtRawNames.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                var previewList = new List<StudentImportModel>();
+                string domain = TxtImportDomain.Text.Trim(); // наприклад @student.university.edu
+                int counter = 100; // Для генерації унікальних номерів (демо)
 
-        // === ВИКЛАДАЧІ ===
+                foreach (var line in lines)
+                {
+                    var parts = line.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2) continue;
+
+                    string last = parts[0];
+                    string first = parts[1];
+
+                    string emailLogin = $"{Transliterate(first)}.{Transliterate(last)}".ToLower();
+                    string email = $"{emailLogin}{domain}";
+
+                    previewList.Add(new StudentImportModel
+                    {
+                        LastName = last,
+                        FirstName = first,
+                        Email = email,
+                        RecordBook = $"RB-{DateTime.Now.Year}-{counter++}"
+                    });
+                }
+
+                GridImportPreview.ItemsSource = previewList;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка обробки: " + ex.Message);
+            }
+        }
+
+        private async void BtnSaveImport_Click(object sender, RoutedEventArgs e)
+        {
+            var list = GridImportPreview.ItemsSource as List<StudentImportModel>;
+            if (list == null || list.Count == 0) return;
+
+            if (CmbImportGroup.SelectedValue == null)
+            {
+                MessageBox.Show("Оберіть групу для імпорту!");
+                return;
+            }
+
+            int groupId = (int)CmbImportGroup.SelectedValue;
+            int successCount = 0;
+
+            foreach (var item in list)
+            {
+                try
+                {
+                    var newUser = new User
+                    {
+                        FirstName = item.FirstName,
+                        LastName = item.LastName,
+                        Email = item.Email,
+                        RoleId = 2 // Student
+                    };
+
+                    await _identityService.RegisterStudentAsync(newUser, "123456", groupId, item.RecordBook);
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Помилка імпорту {item.Email}: {ex.Message}");
+                }
+            }
+
+            MessageBox.Show($"Імпортовано: {successCount} з {list.Count}");
+
+            PanelImport.Visibility = Visibility.Collapsed;
+            GridImportPreview.ItemsSource = null;
+            TxtRawNames.Clear();
+
+            RefreshStudentList(groupId);
+            LoadLogs();
+        }
+
+        private string Transliterate(string ukrText)
+        {
+            string[] ukr = { "а", "б", "в", "г", "ґ", "д", "е", "є", "ж", "з", "и", "і", "ї", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ь", "ю", "я", "А", "Б", "В", "Г", "Ґ", "Д", "Е", "Є", "Ж", "З", "И", "І", "Ї", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ь", "Ю", "Я" };
+            string[] eng = { "a", "b", "v", "h", "g", "d", "e", "ye", "zh", "z", "y", "i", "yi", "y", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u", "f", "kh", "ts", "ch", "sh", "shch", "", "yu", "ya", "A", "B", "V", "H", "G", "D", "E", "Ye", "Zh", "Z", "Y", "I", "Yi", "Y", "K", "L", "M", "N", "O", "P", "R", "S", "T", "U", "F", "Kh", "Ts", "Ch", "Sh", "Shch", "", "Yu", "Ya" };
+
+            for (int i = 0; i < ukr.Length; i++)
+            {
+                ukrText = ukrText.Replace(ukr[i], eng[i]);
+            }
+            return ukrText;
+        }
+
         private async void RefreshSupervisorList(int? deptId = null) =>
             GridAllSupervisors.ItemsSource = new ObservableCollection<Supervisor>(await _adminService.GetSupervisorsByDeptAsync(deptId));
 
@@ -292,17 +380,39 @@ namespace Practice.Windows
         {
             try
             {
-                if (CmbStudGroup.SelectedValue == null) throw new Exception("Оберіть групу"); // Note: original code used CmbStudGroup
-                if (CmbSupDept.SelectedValue == null) throw new Exception("Оберіть кафедру");
+                if (CmbSupDept.SelectedValue == null)
+                {
+                    MessageBox.Show("Оберіть кафедру! Це обов'язково.");
+                    return;
+                }
 
-                var u = new User { LastName = TxtSupLast.Text, FirstName = TxtSupFirst.Text, Email = TxtSupEmail.Text, RoleId = 3 };
-                await _identityService.RegisterSupervisorAsync(u, TxtSupPass.Text, (int)CmbSupDept.SelectedValue, CmbSupPos.SelectedValue as int?, TxtSupPhone.Text);
+                int deptId = (int)CmbSupDept.SelectedValue;
+                int? posId = CmbSupPos.SelectedValue as int?;
+
+                var u = new User
+                {
+                    LastName = TxtSupLast.Text,
+                    FirstName = TxtSupFirst.Text,
+                    Email = TxtSupEmail.Text,
+                    RoleId = 3 
+                };
+
+                // 3. Реєстрація
+                await _identityService.RegisterSupervisorAsync(u, TxtSupPass.Text, deptId, posId, TxtSupPhone.Text);
 
                 MessageBox.Show("Керівника додано!");
+
+                // 4. Оновлення списків
                 RefreshSupervisorList((int?)CmbFilterDept.SelectedValue);
+                ReloadCourseSupervisors(); // Оновити випадайку в курсах (Пункт 5)
+
+                // 5. Логування (Пункт 6 - пишемо нормальні деталі)
                 LoadLogs();
             }
-            catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка додавання: " + ex.Message + "\n" + ex.InnerException?.Message);
+            }
         }
 
         private async void BtnDeleteSupervisor_Click(object sender, RoutedEventArgs e)
@@ -346,7 +456,6 @@ namespace Practice.Windows
             catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
         }
 
-        // === СТРУКТУРА ===
         private void StructMenu_Checked(object sender, RoutedEventArgs e)
         {
             if (PanelAddSpecialty == null) return;
@@ -456,6 +565,90 @@ namespace Practice.Windows
             {
                 _editingItem = btn.Tag;
                 ModalEditStruct.Visibility = Visibility.Visible;
+
+                PanelEditStructCode.Visibility = Visibility.Collapsed;
+                PanelEditStructYear.Visibility = Visibility.Collapsed;
+                PanelEditStructDept.Visibility = Visibility.Collapsed;
+                PanelEditStructSpec.Visibility = Visibility.Collapsed;
+                PanelEditStructName.Visibility = Visibility.Visible;
+
+                if (_editingItem is Specialty s)
+                {
+                    LblStructName.Text = "Назва спеціальності:";
+                    EditStructName.Text = s.Name;
+
+                    PanelEditStructCode.Visibility = Visibility.Visible;
+                    LblStructCode.Text = "Код:";
+                    EditStructCode.Text = s.Code;
+
+                    PanelEditStructDept.Visibility = Visibility.Visible;
+                    EditStructDept.SelectedValue = s.DepartmentId;
+                }
+                else if (_editingItem is StudentGroup g)
+                {
+                    LblStructName.Text = "Шифр групи:";
+                    EditStructName.Text = g.GroupCode;
+
+                    PanelEditStructYear.Visibility = Visibility.Visible;
+                    EditStructYear.Text = g.EntryYear.ToString();
+
+                    PanelEditStructSpec.Visibility = Visibility.Visible;
+                    EditStructSpec.SelectedValue = g.SpecialtyId;
+                }
+                else if (_editingItem is Department d)
+                {
+                    LblStructName.Text = "Назва кафедри:";
+                    EditStructName.Text = d.DepartmentName;
+                }
+                else if (_editingItem is SimpleItemViewModel sim)
+                {
+                    LblStructName.Text = "Назва:";
+                    EditStructName.Text = sim.Name;
+                }
+            }
+        }
+
+        private async void BtnSaveEditStruct_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_editingItem is Specialty s)
+                {
+                    s.Name = EditStructName.Text;
+                    s.Code = EditStructCode.Text;
+                    if (EditStructDept.SelectedValue is int deptId) s.DepartmentId = deptId;
+                    await _adminService.UpdateSpecialtyAsync(s);
+                }
+                else if (_editingItem is StudentGroup g)
+                {
+                    g.GroupCode = EditStructName.Text;
+                    if (int.TryParse(EditStructYear.Text, out int y)) g.EntryYear = y;
+                    if (EditStructSpec.SelectedValue is int specId) g.SpecialtyId = specId;
+                    await _adminService.UpdateGroupAsync(g);
+                }
+                else if (_editingItem is Department d)
+                {
+                    d.DepartmentName = EditStructName.Text;
+                    await _adminService.UpdateDepartmentAsync(d);
+                }
+                else if (_editingItem is SimpleItemViewModel sim)
+                {
+                    if (sim.Type == "Position")
+                    {
+                        await _adminService.UpdatePositionAsync(new Position { PositionId = sim.Id, PositionName = EditStructName.Text });
+                    }
+                    else if (sim.Type == "Discipline")
+                    {
+                        await _adminService.UpdateDisciplineAsync(new Discipline { DisciplineId = sim.Id, DisciplineName = EditStructName.Text });
+                    }
+                }
+
+                ModalEditStruct.Visibility = Visibility.Collapsed;
+                ReloadAllDictionaries();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка збереження: {ex.Message}");
             }
         }
 
@@ -466,9 +659,7 @@ namespace Practice.Windows
         }
 
         private void EditStructDept_SelectionChanged(object sender, SelectionChangedEventArgs e) { }
-        private async void BtnSaveEditStruct_Click(object sender, RoutedEventArgs e) { ModalEditStruct.Visibility = Visibility.Collapsed; }
 
-        // === БАЗИ І ТЕМИ ===
         private async void RefreshPracticeTab(int? orgId = null, string type = null)
         {
             var topics = await _practiceService.GetAvailableTopicsAsync();
@@ -488,11 +679,31 @@ namespace Practice.Windows
         {
             try
             {
-                await _practiceService.CreateOrganizationAsync(TxtOrgName.Text, TxtOrgAddr.Text, CmbOrgType.SelectedIndex == 0 ? "External" : "University", TxtOrgEmail.Text);
+                string name;
+                string type;
+
+                if (CmbOrgType.SelectedIndex == 1) // Кафедра (University)
+                {
+                    if (CmbOrgDeptSource.SelectedValue == null) throw new Exception("Оберіть кафедру зі списку!");
+                    name = CmbOrgDeptSource.SelectedValue.ToString() + " (Внутрішня)";
+                    type = "University";
+                }
+                else // Зовнішня
+                {
+                    if (string.IsNullOrWhiteSpace(TxtOrgName.Text)) throw new Exception("Введіть назву організації!");
+                    name = TxtOrgName.Text;
+                    type = "External";
+                }
+
+                await _practiceService.CreateOrganizationAsync(name, TxtOrgAddr.Text, type, TxtOrgEmail.Text);
+
                 RefreshPracticeTab();
-                ReloadAllDictionaries();
+                ReloadAllDictionaries(); // Оновлює випадайки в темах
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private async void BtnAddTopic_Click(object sender, RoutedEventArgs e)
@@ -540,16 +751,6 @@ namespace Practice.Windows
                 t.IsAvailable = chk.IsChecked == true;
                 await _practiceService.UpdateTopicAsync(t);
             }
-        }
-
-        private async void BtnDelTopic_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button b && b.Tag is int id) { await _practiceService.DeleteTopicAsync(id); RefreshPracticeTab(); }
-        }
-
-        private async void BtnDelOrg_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button b && b.Tag is int id) { await _practiceService.DeleteOrganizationAsync(id); RefreshPracticeTab(); ReloadAllDictionaries(); }
         }
 
         private void BtnEditOrg_Click(object sender, RoutedEventArgs e)
@@ -600,14 +801,18 @@ namespace Practice.Windows
             RefreshPracticeTab();
         }
 
-        // === КУРСИ ===
+        private void CmbOrgType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (PanelOrgNameInput == null) return;
+            bool isUni = CmbOrgType.SelectedIndex == 1;
+            PanelOrgDeptSelect.Visibility = isUni ? Visibility.Visible : Visibility.Collapsed;
+            PanelOrgNameInput.Visibility = isUni ? Visibility.Collapsed : Visibility.Visible;
+        }
         private async void RefreshCoursesList()
         {
             var courses = await _courseService.GetAllActiveCoursesAsync();
             _cachedCourses = courses.ToList();
-
             ApplyCourseFilters();
-
             CmbEnrollCourse.ItemsSource = null;
             CmbEnrollCourse.ItemsSource = _cachedCourses;
         }
@@ -619,10 +824,8 @@ namespace Practice.Windows
 
             if (CmbCourseFilterGroup.SelectedValue is int gid)
                 q = q.Where(c => c.CourseEnrollments != null && c.CourseEnrollments.Any(e => e.GroupId == gid));
-
             if (CmbCourseSort.SelectedIndex == 0) q = q.OrderBy(c => c.Name);
             else if (CmbCourseSort.SelectedIndex == 1) q = q.OrderBy(c => c.Discipline?.DisciplineName);
-
             GridCourses.ItemsSource = new ObservableCollection<Course>(q);
         }
 
@@ -635,7 +838,6 @@ namespace Practice.Windows
             try
             {
                 if (CmbCourseDiscipline.SelectedValue == null) throw new Exception("Оберіть дисципліну!");
-
                 var c = new Course
                 {
                     Name = TxtCourseName.Text,
@@ -690,14 +892,18 @@ namespace Practice.Windows
         {
             if (sender is Button btn && btn.Tag is int id)
             {
-                if (MessageBox.Show("Видалити курс? Усі зарахування буде скасовано.", "Підтвердження", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                var courseToDelete = _cachedCourses.FirstOrDefault(c => c.CourseId == id);
+                string courseName = courseToDelete?.Name ?? "Unknown";
+
+                if (MessageBox.Show($"Видалити курс '{courseName}'?", "Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    await TryDelete(async () =>
-                    {
-                        await _courseService.DeleteCourseAsync(id);
-                        RefreshCoursesList();
-                        LoadLogs();
-                    }, "Не вдалося видалити курс.");
+                    await _courseService.DeleteCourseAsync(id);
+
+                    // ЯВНИЙ запис в лог з назвою
+                    await _auditService.LogActionAsync(_currentUser.UserId, "Delete", $"Видалено курс: {courseName}", "Course", id);
+
+                    RefreshCoursesList();
+                    LoadLogs();
                 }
             }
         }
@@ -731,15 +937,6 @@ namespace Practice.Windows
             }
         }
 
-        private void CmbOrgType_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (PanelOrgNameInput == null) return;
-            bool isUni = CmbOrgType.SelectedIndex == 1;
-            PanelOrgDeptSelect.Visibility = isUni ? Visibility.Visible : Visibility.Collapsed;
-            PanelOrgNameInput.Visibility = isUni ? Visibility.Collapsed : Visibility.Visible;
-        }
-
-        // === ЛОГИ ТА СИСТЕМА ===
         private async void LoadLogs() { _allLogs = await _auditService.GetAllLogsAsync(); ApplyLogFilter(); }
         private void BtnRefreshLogs_Click(object sender, RoutedEventArgs e) => LoadLogs();
         private void CmbLogFilter_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyLogFilter();

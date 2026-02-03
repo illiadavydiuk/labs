@@ -248,6 +248,9 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource IconButton}" Background="#FF9800" Click="BtnEditSupervisor_Click" Tag="{Binding UserId}" Margin="0,0,5,0">
+                                                    <Path Data="{StaticResource IconPencil}" Fill="White" Stretch="Uniform" Margin="2"/>
+                                                </Button>
                                                 <Button Style="{StaticResource IconButton}" Background="#F44336" Click="BtnDeleteSupervisor_Click" Tag="{Binding UserId}">
                                                     <Path Data="{StaticResource IconClose}" Fill="White" Stretch="Uniform" Margin="2"/>
                                                 </Button>
@@ -485,7 +488,7 @@
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="Список тем" FontWeight="Bold" VerticalAlignment="Center"/>
-                                    <TextBlock Text="  |  Фільтр по базі:" VerticalAlignment="Center" Margin="10,0,5,0" Foreground="Gray"/>
+                                    <TextBlock Text="  | Фільтр по базі:" VerticalAlignment="Center" Margin="10,0,5,0" Foreground="Gray"/>
                                     <ComboBox x:Name="CmbFilterTopicOrg" Width="150" DisplayMemberPath="Name" SelectedValuePath="OrganizationId" SelectionChanged="CmbFilterTopicOrg_SelectionChanged" Height="25" Padding="5,0"/>
                                     <Button Content="Очистити" Click="BtnResetTopicFilter_Click" Background="#90A4AE" Foreground="White" Margin="10,0,0,0" Padding="10,5" BorderThickness="0"/>
                                 </StackPanel>
@@ -526,7 +529,7 @@
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="Список організацій" FontWeight="Bold" VerticalAlignment="Center"/>
-                                    <TextBlock Text="  |  Фільтр по типу:" VerticalAlignment="Center" Margin="10,0,5,0" Foreground="Gray"/>
+                                    <TextBlock Text="  | Фільтр по типу:" VerticalAlignment="Center" Margin="10,0,5,0" Foreground="Gray"/>
                                     <ComboBox x:Name="CmbFilterOrgType" Width="150" SelectionChanged="CmbFilterOrgType_SelectionChanged" Height="25" Padding="5,0">
                                         <ComboBoxItem Content="Зовнішня"/>
                                         <ComboBoxItem Content="Кафедра"/>
@@ -539,9 +542,7 @@
                                     <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="*"/>
                                     <DataGridTextColumn Header="Адреса" Binding="{Binding Address}" Width="*"/>
                                     <DataGridTextColumn Header="Тип" Binding="{Binding Type}" Width="100"/>
-
                                     <DataGridTextColumn Header="Email" Binding="{Binding ContactEmail}" Width="150"/>
-
                                     <DataGridTemplateColumn Width="80" Header="Дії">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -596,13 +597,14 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
+
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                             <TextBlock Text="Сортування:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <ComboBox x:Name="CmbCourseSort" Width="150" SelectionChanged="CmbCourseSort_SelectionChanged" Height="25" Padding="5,0">
                                 <ComboBoxItem Content="За назвою"/>
                                 <ComboBoxItem Content="За дисципліною"/>
                             </ComboBox>
-                            <TextBlock Text="  |  Фільтр по групі:" VerticalAlignment="Center" Margin="15,0,10,0" Foreground="Gray"/>
+                            <TextBlock Text="  | Фільтр по групі:" VerticalAlignment="Center" Margin="15,0,10,0" Foreground="Gray"/>
                             <ComboBox x:Name="CmbCourseFilterGroup" Width="120" DisplayMemberPath="GroupCode" SelectedValuePath="GroupId" SelectionChanged="CmbCourseFilterGroup_SelectionChanged" Height="25" Padding="5,0"/>
                             <Button Content="Очистити" Click="BtnResetCourseFilter_Click" Background="#90A4AE" Foreground="White" Margin="10,0,0,0" Padding="10,5" BorderThickness="0"/>
                         </StackPanel>
@@ -613,7 +615,6 @@
                                 <DataGridTextColumn Header="Рік" Binding="{Binding Year}" Width="50"/>
                                 <DataGridTextColumn Header="Дисципліна" Binding="{Binding Discipline.DisciplineName}" Width="120"/>
                                 <DataGridTextColumn Header="Керівник" Binding="{Binding Supervisor.User.LastName}" Width="100"/>
-
                                 <DataGridTemplateColumn Header="Зараховані групи" Width="*">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -628,19 +629,7 @@
                                                         <Border Background="#E3F2FD" CornerRadius="10" Margin="2" Padding="8,2" BorderBrush="#2196F3" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <TextBlock Text="{Binding StudentGroup.GroupCode}" FontSize="11" VerticalAlignment="Center" Foreground="#1565C0" FontWeight="Bold"/>
-                                                                <Button Content="×" 
-                                                Click="BtnUnenrollOneGroup_Click" 
-                                                Tag="{Binding}"
-                                                Margin="5,0,0,0" 
-                                                Padding="0"
-                                                Width="16" Height="16"
-                                                FontSize="14"
-                                                FontWeight="Bold"
-                                                Background="Transparent" 
-                                                Foreground="Red" 
-                                                BorderThickness="0"
-                                                Cursor="Hand"
-                                                ToolTip="Відрахувати групу"/>
+                                                                <Button Content="×" Click="BtnUnenrollOneGroup_Click" Tag="{Binding}" Margin="5,0,0,0" Padding="0" Width="16" Height="16" FontSize="14" FontWeight="Bold" Background="Transparent" Foreground="Red" BorderThickness="0" Cursor="Hand" ToolTip="Відрахувати групу"/>
                                                             </StackPanel>
                                                         </Border>
                                                     </DataTemplate>

@@ -44,7 +44,6 @@ namespace Practice.Services.Implementations
             _orgRepo = orgRepo;
         }
 
-        // --- Students ---
         public async Task<List<Student>> GetStudentsByGroupAsync(int? groupId)
         {
             var students = await _studentRepo.GetStudentsByGroupAsync(groupId);
@@ -84,7 +83,6 @@ namespace Practice.Services.Implementations
             }
         }
 
-        // --- Supervisors ---
         public async Task<List<Supervisor>> GetSupervisorsByDeptAsync(int? deptId)
         {
             var sups = await _supervisorRepo.GetSupervisorsByDepartmentAsync(deptId);
@@ -125,7 +123,6 @@ namespace Practice.Services.Implementations
             }
         }
 
-        // --- Organization Update ---
         public async Task UpdateOrganizationAsync(Organization org)
         {
             var existing = await _orgRepo.GetByIdAsync(org.OrganizationId);
@@ -148,7 +145,6 @@ namespace Practice.Services.Implementations
             if (ex != null) { _orgRepo.Delete(ex); await _orgRepo.SaveAsync(); }
         }
 
-        // --- Dictionaries ---
         public async Task<IEnumerable<Specialty>> GetAllSpecialtiesAsync() => await _specialtyRepo.GetAllAsync();
         public async Task AddSpecialtyAsync(Specialty s) { _specialtyRepo.Add(s); await _specialtyRepo.SaveAsync(); }
         public async Task UpdateSpecialtyAsync(Specialty s)
@@ -217,6 +213,27 @@ namespace Practice.Services.Implementations
                 _discRepo.Delete(ex); 
                 await _discRepo.SaveAsync(); 
             } 
+        }
+        public async Task UpdatePositionAsync(Position p)
+        {
+            var ex = await _posRepo.GetByIdAsync(p.PositionId);
+            if (ex != null)
+            {
+                ex.PositionName = p.PositionName;
+                _posRepo.Update(ex);
+                await _posRepo.SaveAsync();
+            }
+        }
+
+        public async Task UpdateDisciplineAsync(Discipline d)
+        {
+            var ex = await _discRepo.GetByIdAsync(d.DisciplineId);
+            if (ex != null)
+            {
+                ex.DisciplineName = d.DisciplineName;
+                _discRepo.Update(ex);
+                await _discRepo.SaveAsync();
+            }
         }
     }
 }

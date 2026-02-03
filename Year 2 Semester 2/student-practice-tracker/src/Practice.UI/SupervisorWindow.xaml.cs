@@ -111,17 +111,21 @@ namespace Practice.Windows
 
         private void ShowDetails(InternshipAssignment a)
         {
+            if (a == null) return;
+
             PanelEmpty.Visibility = Visibility.Collapsed;
             PanelContent.Visibility = Visibility.Visible;
 
+            // 1. Основна інформація
             TxtActiveStudent.Text = $"{a.Student.User.LastName} {a.Student.User.FirstName}";
             TxtActiveTopic.Text = a.InternshipTopic?.Title ?? "-";
             TxtActiveOrg.Text = a.InternshipTopic?.Organization?.Name ?? "-";
 
+            // 2. Шукаємо останній звіт
             var report = a.Reports?.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
 
+            // 3. Формуємо історію (твій код був ок, я залишив його)
             var historyList = new List<dynamic>();
-
             if (a.Reports != null)
             {
                 foreach (var r in a.Reports.OrderByDescending(x => x.SubmissionDate))
@@ -135,7 +139,7 @@ namespace Practice.Windows
 
                     if (r.ReviewDate.HasValue)
                     {
-                        string statusText = r.StatusId == 2 ? "Повернуто на доопрацювання" : (r.StatusId == 3 ? "Прийнято" : "Перевірено");
+                        string statusText = r.StatusId == 2 ? "Повернуто" : (r.StatusId == 3 ? "Прийнято" : "Перевірено");
                         historyList.Add(new
                         {
                             TimeStamp = r.ReviewDate.Value,
@@ -147,18 +151,29 @@ namespace Practice.Windows
             }
             ListHistory.ItemsSource = historyList.OrderByDescending(x => x.TimeStamp).ToList();
 
-
             if (report != null)
             {
                 TxtReportDate.Text = report.SubmissionDate.ToString("dd.MM.yyyy HH:mm");
                 TxtStudentComment.Text = report.StudentComment;
 
+                // Посилання
                 var linkAttach = report.Attachments?.FirstOrDefault(f => f.FileType == "URL");
                 TxtStudentLink.Text = linkAttach != null ? linkAttach.FilePath : "-";
 
-                ListAttachments.ItemsSource = report.Attachments?.Where(f => f.FileType != "URL").ToList();
+                var files = report.Attachments?.Where(f => f.FileType != "URL").ToList();
+
+                if (files == null || files.Count == 0)
+                {
+                   
+                }
+
+                ListAttachments.ItemsSource = null;
+                ListAttachments.ItemsSource = files;
+
+                // Відгук викладача
                 TxtSupervisorFeedback.Text = report.SupervisorFeedback;
 
+                // Статус у ComboBox
                 CmbReportStatus.SelectedIndex = -1;
                 foreach (ComboBoxItem item in CmbReportStatus.Items)
                 {
@@ -171,6 +186,7 @@ namespace Practice.Windows
             }
             else
             {
+                // Якщо звіту немає
                 TxtReportDate.Text = "Не подано";
                 TxtStudentComment.Text = "-";
                 TxtStudentLink.Text = "-";
@@ -179,6 +195,7 @@ namespace Practice.Windows
                 CmbReportStatus.SelectedIndex = -1;
             }
 
+            // Оцінки
             TxtFinalGrade.Text = a.FinalGrade?.ToString() ?? "";
             TxtCompanyGrade.Text = a.CompanyGrade?.ToString() ?? "";
             TxtCompanyFeedback.Text = a.CompanyFeedback ?? "";

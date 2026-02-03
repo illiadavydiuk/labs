@@ -21,7 +21,7 @@ namespace Practice.Data.Entities
         public int Year { get; set; }
         public bool IsActive { get; set; } = true;
 
-        public virtual ICollection<InternshipAssignment> IntershipAssignments { get; set; }
+        public virtual ICollection<InternshipAssignment> InternshipAssignments { get; set; }
         public virtual ICollection<CourseEnrollment> CourseEnrollments { get; set; }
     }
 }

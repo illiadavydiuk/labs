@@ -32,8 +32,8 @@ namespace Practice
             var supervisorRepo = new SupervisorRepository(_context);
             var groupRepo = new StudentGroupRepository(_context);
             var deptRepo = new DepartmentRepository(_context);
-            var auditLogRepo = new AuditLogRepository(_context); 
-            var auditRepo = new AuditLogRepository(_context);   
+            var auditLogRepo = new AuditLogRepository(_context);
+            var auditRepo = new AuditLogRepository(_context);
             var topicRepo = new InternshipTopicRepository(_context);
             var assignRepo = new InternshipAssignmentRepository(_context);
             var statusRepo = new AssignmentStatusRepository(_context);
@@ -63,7 +63,8 @@ namespace Practice
                 courseRepo,
                 reportRepo,
                 auditLogRepo,
-                _auditService
+                _auditService,
+                attachRepo
             );
 
             _supervisorService = new SupervisorService(supervisorRepo, assignRepo, reportRepo, _context);
@@ -80,6 +81,17 @@ namespace Practice
 
                 if (user != null)
                 {
+                    if (user.IsPasswordChangeRequired)
+                    {
+                        var changePassWindow = new ChangePasswordWindow(user, _identityService);
+
+                        if (changePassWindow.ShowDialog() != true)
+                        {
+                            TxtError.Text = "Для входу необхідно змінити пароль.";
+                            return; 
+                        }
+                    }
+
                     Window nextWindow = null;
                     switch (user.Role.RoleName)
                     {
@@ -96,8 +108,12 @@ namespace Practice
                             MessageBox.Show("Роль не визначена");
                             return;
                     }
-                    nextWindow.Show();
-                    this.Close();
+
+                    if (nextWindow != null)
+                    {
+                        nextWindow.Show();
+                        this.Close();
+                    }
                 }
                 else
                 {

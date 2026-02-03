@@ -12,6 +12,7 @@ namespace Practice.Repositories.Interfaces
         Task<IEnumerable<Student>> GetStudentsByGroupAsync(int? groupId);
         Task<Student?> GetStudentProfileAsync(int userId);
         Task<List<Course>> GetEnrolledCoursesForStudentAsync(int studentId, int groupId);
+        Task<Student> GetByEmailAsync(string email);
     }
 }
 

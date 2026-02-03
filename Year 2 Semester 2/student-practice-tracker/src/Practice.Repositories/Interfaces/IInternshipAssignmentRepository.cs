@@ -16,5 +16,7 @@ namespace Practice.Repositories.Interfaces
         Task<InternshipAssignment?> GetByStudentAndCourseAsync(int studentId, int courseId);
         Task AddAssignmentWithTopicUpdateAsync(InternshipAssignment assignment, int topicId);
         Task UpdateAssignmentTopicAsync(InternshipAssignment assignment, int newTopicId);
+        Task<List<InternshipAssignment>> GetByStudentIdAsync(int studentId);
+        Task<List<InternshipAssignment>> GetBySupervisorIdAsync(int supervisorId);
     }
 }
