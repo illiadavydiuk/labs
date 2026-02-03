@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Practice.Windows.AdminWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Admin Dashboard" Height="850" Width="1350"
+        Title="Admin Dashboard" Height="1050" Width="1350"
         WindowStartupLocation="CenterScreen" Background="White">
 
     <Window.Resources>
@@ -499,7 +499,7 @@
                                     <DataGridTextColumn Header="Предмет" Binding="{Binding Discipline.DisciplineName}" Width="150" IsReadOnly="True"/>
                                     <DataGridTextColumn Header="Організація" Binding="{Binding Organization.Name}" Width="200" IsReadOnly="True"/>
 
-                                    <DataGridTemplateColumn Header="Вільна" Width="60">
+                                    <DataGridTemplateColumn Header="Вільна" Width="70">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <CheckBox IsChecked="{Binding IsAvailable, Mode=OneWay}" Click="ChkTopicAvailable_Click" HorizontalAlignment="Center"/>
@@ -507,7 +507,7 @@
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
 
-                                    <DataGridTemplateColumn Width="80" Header="Дії">
+                                    <DataGridTemplateColumn Width="90" Header="Дії">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
@@ -543,7 +543,7 @@
                                     <DataGridTextColumn Header="Адреса" Binding="{Binding Address}" Width="*"/>
                                     <DataGridTextColumn Header="Тип" Binding="{Binding Type}" Width="100"/>
                                     <DataGridTextColumn Header="Email" Binding="{Binding ContactEmail}" Width="150"/>
-                                    <DataGridTemplateColumn Width="80" Header="Дії">
+                                    <DataGridTemplateColumn Width="90" Header="Дії">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
@@ -611,9 +611,9 @@
 
                         <DataGrid Grid.Row="1" x:Name="GridCourses" IsReadOnly="True" CanUserSortColumns="True" AutoGenerateColumns="False" Background="White" BorderBrush="#EEE" RowHeight="45">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Назва курсу" Binding="{Binding Name}" Width="150"/>
-                                <DataGridTextColumn Header="Рік" Binding="{Binding Year}" Width="50"/>
-                                <DataGridTextColumn Header="Дисципліна" Binding="{Binding Discipline.DisciplineName}" Width="120"/>
+                                <DataGridTextColumn Header="Назва курсу" Binding="{Binding Name}" Width="210"/>
+                                <DataGridTextColumn Header="Рік" Binding="{Binding Year}" Width="60"/>
+                                <DataGridTextColumn Header="Дисципліна" Binding="{Binding Discipline.DisciplineName}" Width="150"/>
                                 <DataGridTextColumn Header="Керівник" Binding="{Binding Supervisor.User.LastName}" Width="100"/>
                                 <DataGridTemplateColumn Header="Зараховані групи" Width="*">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -639,7 +639,7 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTemplateColumn Width="80" Header="Дії">
+                                <DataGridTemplateColumn Width="90" Header="Дії">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
