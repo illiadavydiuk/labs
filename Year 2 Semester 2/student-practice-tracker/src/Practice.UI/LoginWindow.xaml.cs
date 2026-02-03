@@ -49,13 +49,13 @@ namespace Practice
 
             _auditService = new AuditService(auditRepo);
 
-            _reportingService = new ReportingService(assignRepo, groupRepo);
+            _courseService = new CourseService(courseRepo, discRepo, enrollRepo, _auditService);
+
+            _reportingService = new ReportingService(assignRepo, groupRepo, _courseService);
 
             _identityService = new IdentityService(userRepo, studentRepo, supervisorRepo, groupRepo, deptRepo, _auditService);
 
             _adminService = new AdminService(_auditService, studentRepo, userRepo, supervisorRepo, specRepo, groupRepo, deptRepo, posRepo, discRepo, orgRepo);
-
-            _courseService = new CourseService(courseRepo, discRepo, enrollRepo, _auditService);
 
             _practiceService = new PracticeService(topicRepo, assignRepo, statusRepo, orgRepo, _auditService);
 

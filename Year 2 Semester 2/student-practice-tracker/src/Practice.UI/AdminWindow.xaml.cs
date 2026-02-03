@@ -119,6 +119,7 @@ namespace Practice.Windows
                 CmbDeptForSpec.ItemsSource = depts;
                 EditStructDept.ItemsSource = depts;
                 CmbOrgDeptSource.ItemsSource = depts;
+                CmbReportDept.ItemsSource = depts;
 
                 CmbSupPos.ItemsSource = positions;
                 EditSupPos.ItemsSource = positions;
@@ -1002,6 +1003,40 @@ namespace Practice.Windows
             {
                 await _reportingService.GenerateExcelStatusReportAsync(dlg.FileName);
                 MessageBox.Show("Excel звіт збережено!");
+            }
+        }
+        private async void CmbReportDept_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (CmbReportDept.SelectedValue is int deptId)
+            {
+                CmbReportCourse.ItemsSource = null;
+                CmbReportGroup.ItemsSource = null;
+
+                var allCourses = await _courseService.GetAllActiveCoursesAsync();
+
+                var filteredCourses = allCourses
+                    .Where(c => c.Supervisor != null && c.Supervisor.DepartmentId == deptId)
+                    .ToList();
+
+                CmbReportCourse.ItemsSource = filteredCourses;
+            }
+        }
+        private async void CmbReportCourse_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (CmbReportCourse.SelectedValue is int courseId)
+            {
+                CmbReportGroup.ItemsSource = null;
+
+                var enrollments = await _courseService.GetByCourseIdAsync(courseId);
+
+                var uniqueGroups = enrollments
+                    .Where(enr => enr.Student != null && enr.Student.StudentGroup != null)
+                    .Select(enr => enr.Student.StudentGroup)
+                    .GroupBy(g => g.GroupId)
+                    .Select(g => g.First())
+                    .ToList();
+
+                CmbReportGroup.ItemsSource = uniqueGroups;
             }
         }
     }

@@ -11,18 +11,22 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
+using XLColor = ClosedXML.Excel.XLColor;
+using PdfColor = QuestPDF.Infrastructure.Color;
+
 namespace Practice.Services.Implementations
 {
     public class ReportingService : IReportingService
     {
         private readonly IInternshipAssignmentRepository _assignmentRepo;
         private readonly IStudentGroupRepository _groupRepo;
+        private readonly ICourseService _courseService;
 
-        public ReportingService(IInternshipAssignmentRepository assignmentRepo, IStudentGroupRepository groupRepo)
+        public ReportingService(IInternshipAssignmentRepository assignmentRepo, IStudentGroupRepository groupRepo, ICourseService courseService)
         {
             _assignmentRepo = assignmentRepo;
             _groupRepo = groupRepo;
-            // Встановлюємо ліцензію (обов'язково для QuestPDF)
+            _courseService = courseService;
             QuestPDF.Settings.License = LicenseType.Community;
         }
 
@@ -52,39 +56,86 @@ namespace Practice.Services.Implementations
         {
             var assignments = await _assignmentRepo.GetAllAsync();
 
+            var groupedAssignments = assignments
+                .Where(a => a.Student?.StudentGroup != null)
+                .GroupBy(a => a.Student.StudentGroup.GroupCode)
+                .OrderBy(g => g.Key);
+
             using (var workbook = new XLWorkbook())
             {
-                var worksheet = workbook.Worksheets.Add("Реєстр розподілу");
-
-                // Заголовки
-                worksheet.Cell(1, 1).Value = "ПІБ Студента";
-                worksheet.Cell(1, 2).Value = "Група";
-                worksheet.Cell(1, 3).Value = "Тема практики";
-                worksheet.Cell(1, 4).Value = "Статус призначення";
-                worksheet.Cell(1, 5).Value = "Статус останнього звіту";
-                worksheet.Cell(1, 6).Value = "Дата подачі";
-                worksheet.Cell(1, 7).Value = "Коментар керівника";
-
-                var headerRange = worksheet.Range(1, 1, 1, 7);
-                headerRange.Style.Font.Bold = true;
-                headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-
-                int row = 2;
-                foreach (var a in assignments)
+                foreach (var group in groupedAssignments)
                 {
-                    var lastReport = a.Reports?.OrderByDescending(r => r.SubmissionDate).FirstOrDefault();
+                    string sheetName = group.Key.Length > 31 ? group.Key.Substring(0, 31) : group.Key;
+                    var ws = workbook.Worksheets.Add(sheetName);
 
-                    worksheet.Cell(row, 1).Value = $"{a.Student?.User?.LastName} {a.Student?.User?.FirstName}"; 
-                    worksheet.Cell(row, 2).Value = a.Student?.StudentGroup?.GroupCode; 
-                    worksheet.Cell(row, 3).Value = a.InternshipTopic?.Title; 
-                    worksheet.Cell(row, 4).Value = a.AssignmentStatus?.StatusName; 
-                    worksheet.Cell(row, 5).Value = lastReport?.ReportStatus?.StatusName ?? "Не подано"; 
-                    worksheet.Cell(row, 6).Value = lastReport?.SubmissionDate.ToString("dd.MM.yyyy") ?? "-"; 
-                    worksheet.Cell(row, 7).Value = lastReport?.SupervisorFeedback ?? "-"; 
-                    row++;
+                    var titleRange = ws.Range(1, 1, 1, 5).Merge();
+                    titleRange.Value = "Відомість результатів навчальної практики";
+                    titleRange.Style.Font.Bold = true;
+                    titleRange.Style.Font.FontSize = 16;
+                    titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    var subtitleRange = ws.Range(2, 1, 2, 5).Merge();
+                    subtitleRange.Value = $"Група: {group.Key} | Рік: {DateTime.Now.Year}";
+                    subtitleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    subtitleRange.Style.Font.Italic = true;
+
+                    string[] headers = { "№", "ПІБ Студента", "Тема практики", "Організація", "Оцінка" };
+                    for (int i = 0; i < headers.Length; i++)
+                    {
+                        var cell = ws.Cell(4, i + 1);
+                        cell.Value = headers[i];
+
+                        var s = cell.Style;
+                        s.Font.Bold = true;
+                        s.Fill.BackgroundColor = XLColor.LightGray;
+                        s.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                        s.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    }
+
+                    int currentRow = 5; 
+                    int counter = 1;
+
+                    foreach (var a in group.OrderBy(x => x.Student?.User?.LastName))
+                    {
+                        ws.Cell(currentRow, 1).SetValue(counter++);
+                        ws.Cell(currentRow, 2).SetValue($"{a.Student?.User?.LastName} {a.Student?.User?.FirstName}");
+                        ws.Cell(currentRow, 3).SetValue(a.InternshipTopic?.Title ?? "-");
+                        ws.Cell(currentRow, 4).SetValue(a.InternshipTopic?.Organization?.Name ?? "-");
+
+                        var gradeCell = ws.Cell(currentRow, 5);
+                        if (a.FinalGrade.HasValue)
+                        {
+                            gradeCell.SetValue(a.FinalGrade.Value);
+
+                            if (a.FinalGrade.Value < 60)
+                            {
+                                gradeCell.Style.Font.FontColor = XLColor.Red;
+                                gradeCell.Style.Font.Bold = true;
+                            }
+                        }
+                        else gradeCell.SetValue("-");
+
+                        var rowDataRange = ws.Range(currentRow, 1, currentRow, 5);
+                        rowDataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                        rowDataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                        currentRow++;
+                    }
+
+                    currentRow += 2;
+                    ws.Cell(currentRow, 2).Value = "Керівник практики від кафедри:";
+                    ws.Cell(currentRow, 4).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+
+                    var supervisor = group.FirstOrDefault()?.Course?.Supervisor?.User;
+                    if (supervisor != null)
+                    {
+                        ws.Cell(currentRow, 5).Value = $"{supervisor.LastName} {supervisor.FirstName[0]}.";
+                        ws.Cell(currentRow, 5).Style.Font.Bold = true;
+                    }
+
+                    ws.Columns(1, 5).AdjustToContents();
                 }
 
-                worksheet.Columns().AdjustToContents();
                 workbook.SaveAs(filePath);
             }
         }
@@ -92,7 +143,12 @@ namespace Practice.Services.Implementations
         public async Task GeneratePdfStatementAsync(int courseId, int groupId, string filePath)
         {
             var assignments = await _assignmentRepo.GetAssignmentsByCourseAsync(courseId);
-            var group = await _groupRepo.GetByIdAsync(groupId); 
+            var group = await _groupRepo.GetByIdAsync(groupId);
+            var course = await _courseService.GetCourseByIdAsync(courseId);
+
+            string supervisorName = course?.Supervisor?.User != null
+                ? $"{course.Supervisor.User.LastName} {course.Supervisor.User.FirstName}"
+                : "Не призначено";
 
             Document.Create(container =>
             {
@@ -102,58 +158,70 @@ namespace Practice.Services.Implementations
                     page.Margin(1.5f, Unit.Centimetre);
                     page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
 
+                    // ЗАГОЛОВОК
                     page.Header().Column(col =>
                     {
-                        col.Item().Text("Відомість результатів навчальної практики").FontSize(18).SemiBold().AlignCenter();
-                        col.Item().PaddingTop(5).Text($"Група: {group?.GroupCode} | Рік: {DateTime.Now.Year}").AlignCenter();
+                        col.Item().AlignCenter().Text("Відомість результатів навчальної практики").FontSize(18).SemiBold();
+                        col.Item().PaddingTop(5).AlignCenter().Text($"Група: {group?.GroupCode} | Рік: {DateTime.Now.Year}");
+                        col.Item().AlignCenter().Text($"Керівник практики: {supervisorName}");
                         col.Item().PaddingBottom(10).LineHorizontal(1);
                     });
 
-                    page.Content().Table(table =>
+                    page.Content().PaddingTop(10).Column(col =>
                     {
-                    table.ColumnsDefinition(columns =>
-                    {
-                        columns.ConstantColumn(25);  // №
-                        columns.RelativeColumn(3);   // ПІБ
-                        columns.RelativeColumn(3);   // Тема
-                        columns.RelativeColumn(2);   // Організація
-                        columns.ConstantColumn(50);  // Оцінка
-                        columns.RelativeColumn(1.5f); // Підпис
+                        
+                        col.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.ConstantColumn(25);  // №
+                                columns.RelativeColumn(3);   // ПІБ
+                                columns.RelativeColumn(4);   // Тема (розширили з 3 до 4)
+                                columns.RelativeColumn(3);   // Організація (розширили з 2 до 3)
+                                columns.ConstantColumn(50);  // Оцінка
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Element(CellStyle).AlignCenter().Text("№");
+                                header.Cell().Element(CellStyle).AlignCenter().Text("ПІБ Студента");
+                                header.Cell().Element(CellStyle).AlignCenter().Text("Тема практики");
+                                header.Cell().Element(CellStyle).AlignCenter().Text("Організація");
+                                header.Cell().Element(CellStyle).AlignCenter().Text("Оцінка");
+
+                                static IContainer CellStyle(IContainer container) =>
+                                    container.DefaultTextStyle(x => x.SemiBold()).PaddingVertical(5).BorderBottom(1);
+                            });
+
+                            int i = 1;
+                            foreach (var a in assignments.Where(x => x.Student.GroupId == groupId))
+                            {
+                                table.Cell().Element(RowStyle).AlignCenter().Text(i++.ToString());
+                                table.Cell().Element(RowStyle).Text($"{a.Student?.User?.LastName} {a.Student?.User?.FirstName}");
+                                table.Cell().Element(RowStyle).AlignCenter().Text(a.InternshipTopic?.Title ?? "-");
+                                table.Cell().Element(RowStyle).AlignCenter().Text(a.InternshipTopic?.Organization?.Name ?? "-");
+                                table.Cell().Element(RowStyle).AlignCenter().Text(a.FinalGrade?.ToString() ?? "-");
+
+                                static IContainer RowStyle(IContainer container) =>
+                                    container.BorderBottom(1).BorderColor(QuestPDF.Helpers.Colors.Grey.Lighten2).PaddingVertical(5);
+                            }
+                        });
+
+                        // ОФІЦІЙНИЙ ПІДПИС ВНИЗУ
+                        col.Item().PaddingTop(30).Row(row =>
+                        {
+                            row.RelativeItem().AlignRight().PaddingRight(10).Text("Керівник практики від кафедри:");
+                            row.ConstantColumn(150).BorderBottom(1).AlignCenter().Text(supervisorName);
+                        });
                     });
 
-                    table.Header(header =>
+                    page.Footer().AlignRight().Text(x =>
                     {
-                        header.Cell().Element(CellStyle).Text("№");
-                        header.Cell().Element(CellStyle).Text("ПІБ Студента");
-                        header.Cell().Element(CellStyle).Text("Тема практики");
-                        header.Cell().Element(CellStyle).Text("Організація");
-                        header.Cell().Element(CellStyle).Text("Оцінка");
-                        header.Cell().Element(CellStyle).Text("Підпис");
-
-                        static IContainer CellStyle(IContainer container) => container.DefaultTextStyle(x => x.SemiBold()).PaddingVertical(5).BorderBottom(1).AlignCenter();
+                        x.Span("Дата формування: ");
+                        x.Span(DateTime.Now.ToString("dd.MM.yyyy"));
                     });
-
-                    int i = 1;
-                    foreach (var a in assignments.Where(x => x.Student.GroupId == groupId))
-                    {
-                        table.Cell().Element(RowStyle).Text(i++.ToString());
-                        table.Cell().Element(RowStyle).Text($"{a.Student?.User?.LastName} {a.Student?.User?.FirstName}");
-                        table.Cell().Element(RowStyle).Text(a.InternshipTopic?.Title ?? "-");
-                        table.Cell().Element(RowStyle).Text(a.InternshipTopic?.Organization?.Name ?? "-");
-                        table.Cell().Element(RowStyle).AlignCenter().Text(a.FinalGrade?.ToString() ?? "-"); 
-                            table.Cell().Element(RowStyle).Text("");
-
-                    static IContainer RowStyle(IContainer container) => container.BorderBottom(1).BorderColor(QuestPDF.Helpers.Colors.Grey.Lighten2).PaddingVertical(5).PaddingHorizontal(2);
-                }
-                    });
-
-            page.Footer().AlignRight().Text(x =>
-            {
-                x.Span("Дата формування: ");
-                x.Span(DateTime.Now.ToString("dd.MM.yyyy"));
-            });
-        });
+                });
             }).GeneratePdf(filePath);
-}
+        }
     }
 }

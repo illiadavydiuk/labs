@@ -688,7 +688,7 @@
                     </DataGrid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Звіти та Адміністрування">
+            <TabItem Header="Звіти та адміністрування">
                 <Grid Margin="20">
                     <StackPanel Width="600" HorizontalAlignment="Left">
                         <TextBlock Text="Керування даними та звітами" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" Foreground="{StaticResource PrimaryColor}"/>
@@ -709,20 +709,35 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Margin="0,0,10,0">
-                                        <TextBlock Text="Оберіть курс:" Style="{StaticResource LabelStyle}"/>
-                                        <ComboBox x:Name="CmbReportCourse" DisplayMemberPath="Name" SelectedValuePath="CourseId"/>
 
+                                    <StackPanel Margin="0,0,10,0">
+                                        <TextBlock Text="Кафедра:" Style="{StaticResource LabelStyle}"/>
+                                        <ComboBox x:Name="CmbReportDept" 
+                  DisplayMemberPath="DepartmentName" 
+                  SelectedValuePath="DepartmentId"
+                  SelectionChanged="CmbReportDept_SelectionChanged"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Оберіть групу:" Style="{StaticResource LabelStyle}"/>
-                                        <ComboBox x:Name="CmbReportGroup" DisplayMemberPath="GroupCode" SelectedValuePath="GroupId"/>
+
+                                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                        <TextBlock Text="Курс:" Style="{StaticResource LabelStyle}"/>
+                                        <ComboBox x:Name="CmbReportCourse" 
+                  DisplayMemberPath="Name" 
+                  SelectedValuePath="CourseId"
+                  SelectionChanged="CmbReportCourse_SelectionChanged"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Група:" Style="{StaticResource LabelStyle}"/>
+                                        <ComboBox x:Name="CmbReportGroup" 
+                  DisplayMemberPath="GroupCode" 
+                  SelectedValuePath="GroupId"/>
                                     </StackPanel>
                                 </Grid>
 
                                 <StackPanel Orientation="Horizontal">
-                                    <Button Content="📄 Згенерувати PDF" Click="BtnPdfReport_Click" Background="#F44336" Margin="0,0,10,0"/>
+                                    <Button Content="📄 Згенерувати PDF" Click="BtnPdfReport_Click" Background="#F44336" Margin="10,0,25,0"/>
                                     <Button Content="Excel Реєстр статусів" Click="BtnExcelReport_Click" Background="#4CAF50"/>
                                 </StackPanel>
                             </StackPanel>

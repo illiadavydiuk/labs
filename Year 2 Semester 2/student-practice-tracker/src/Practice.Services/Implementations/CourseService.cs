@@ -121,5 +121,13 @@ namespace Practice.Services.Implementations
                 await _enrollRepo.SaveAsync();
             }
         }
+        public async Task<IEnumerable<CourseEnrollment>> GetByCourseIdAsync(int courseId)
+        {
+            return await _enrollRepo.GetByCourseIdAsync(courseId);
+        }
+        public async Task<Course> GetCourseByIdAsync(int courseId)
+        {
+            return await _courseRepo.GetByIdAsync(courseId);
+        }
     }
 }

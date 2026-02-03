@@ -16,5 +16,7 @@ namespace Practice.Services.Interfaces
         Task<IEnumerable<Discipline>> GetAllDisciplinesAsync();
         Task AddDisciplineAsync(string name);
         Task UnenrollGroupFromCourseAsync(int courseId, int groupId);
+        Task<IEnumerable<CourseEnrollment>> GetByCourseIdAsync(int courseId);
+        Task<Course> GetCourseByIdAsync(int courseId);
     }
 }
