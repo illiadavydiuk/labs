@@ -29,7 +29,7 @@
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <TextBlock Text="Курс:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="Gray"/>
-                    <ComboBox x:Name="CmbCurrentCourse" Width="220" Margin="0,0,15,0" DisplayMemberPath="Name" SelectionChanged="CmbCurrentCourse_SelectionChanged"/>
+                    <ComboBox x:Name="CmbCurrentCourse" Width="230" Margin="0,0,15,0" DisplayMemberPath="Name" SelectionChanged="CmbCurrentCourse_SelectionChanged"/>
                     <Button Content="Вийти" Click="BtnLogout_Click" Background="#FFEBEE" Foreground="#D32F2F" Height="35" Width="80" BorderThickness="0"/>
                 </StackPanel>
             </Grid>
