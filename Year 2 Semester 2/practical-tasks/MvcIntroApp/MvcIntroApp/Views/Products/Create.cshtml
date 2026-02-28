@@ -1,0 +1,41 @@
+﻿@model Product
+
+<h2>Create Product</h2>
+
+<!-- Показати загальні помилки моделі (як "error summary") -->
+<div asp-validation-summary="All"></div>
+
+<form asp-action="Create" method="post">
+    <!-- Anti-forgery token: захист від підробки POST-запитів.
+         Якщо використовуєте form Tag Helper (asp-action), токен додається автоматично,
+         але явно згадуємо це для розуміння. -->
+
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name"></span>
+    </div>
+
+    <div>
+        <label asp-for="Price"></label>
+        <input asp-for="Price" />
+        <span asp-validation-for="Price"></span>
+        <small>
+            Якщо виникають проблеми з десятковим роздільником (кома/крапка),
+            зверніть увагу на локаль браузера і формат введення.
+        </small>
+    </div>
+
+    <div>
+        <label asp-for="Category"></label>
+        <input asp-for="Category" />
+        <span asp-validation-for="Category"></span>
+    </div>
+
+    <button type="submit">Save</button>
+</form>
+
+@section Scripts {
+    <!-- Підключає клієнтську (JavaScript) валідацію для DataAnnotations -->
+    <partial name="_ValidationScriptsPartial" />
+}

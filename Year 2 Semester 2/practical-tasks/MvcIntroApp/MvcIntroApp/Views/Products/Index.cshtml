@@ -1,0 +1,36 @@
+﻿@model List<Product>
+
+<h1>Products</h1>
+<p>My first MVC page</p>
+
+<h1>Products</h1>
+
+<p>
+    <a asp-controller="Products" asp-action="Create">Create new</a>
+</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Category</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.Name</td>
+                <td>@p.Price</td>
+                <td>@p.Category</td>
+                <td>
+                    <a asp-controller="Products" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
+                    |
+                    <a asp-controller="Products" asp-action="Delete" asp-route-id="@p.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
